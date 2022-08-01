@@ -1,254 +1,127 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{clock, program_option::COption, sysvar};
-use anchor_spl::token::{self, Mint, Token, TokenAccount};
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 declare_id!("6eUddVvNLGkPmJUfRyAMP4Cj4VabxDS9D2Hgb8VhEvrz");
 
 #[program]
 pub mod coin_flip {
     use super::*;
-    pub fn initialize(ctx: Context<Initialize>, amount: u64) -> ProgramResult {
-        let coin_flip = &mut ctx.accounts.coin_flip;
-        coin_flip.win_returns = 95;
-        coin_flip.token_mint = ctx.accounts.token_mint.key();
-        coin_flip.token_vault = ctx.accounts.token_vault.key();
-        // coin_flip.nonce = nonce;
-        
-        if amount == 0 {
-            return Err(ErrorCode::AmountMustBeGreaterThanZero.into());
-        }
+    pub fn initialize(ctx: Context<Initialize>, application_idx: u64, state_bump: u8, _wallet_bump: u8, amount: u64) -> ProgramResult {
+        // Set the state attributes
+        let state = &mut ctx.accounts.application_state;
+        state.idx = application_idx;
+        state.win_returns = 95;
+        state.user_sending = ctx.accounts.user_sending.key().clone();
+        state.user_receiving = ctx.accounts.user_receiving.key().clone();
+        state.mint_of_token_being_sent = ctx.accounts.mint_of_token_being_sent.key().clone();
+        state.escrow_wallet = ctx.accounts.escrow_wallet_state.key().clone();
+        state.amount_tokens = amount;
+        let bump_vector = state_bump.to_le_bytes();
+        let mint_of_token_being_sent_pk = ctx.accounts.mint_of_token_being_sent.key().clone();
+        let application_idx_bytes = application_idx.to_le_bytes();
+        let inner = vec![
+            b"state".as_ref(),
+            ctx.accounts.user_sending.key.as_ref(),
+            ctx.accounts.user_receiving.key.as_ref(),
+            mint_of_token_being_sent_pk.as_ref(), 
+            application_idx_bytes.as_ref(),
+            bump_vector.as_ref(),
+        ];
+        let outer = vec![inner.as_slice()];
 
-        let coin_flip = &mut ctx.accounts.coin_flip;
-        let c = clock::Clock::get().unwrap();
+        // Below is the actual instruction that we are going to send to the Token program.
+        let transfer_instruction = Transfer{
+            from: ctx.accounts.wallet_to_withdraw_from.to_account_info(),
+            to: ctx.accounts.escrow_wallet_state.to_account_info(),
+            authority: ctx.accounts.user_sending.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            transfer_instruction,
+            outer.as_slice(),
+        );
 
-        // Transfer tokens into the token vault.
-       
-        {
-            let cpi_ctx = CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                token::Transfer {
-                    from: ctx.accounts.stake_from_account.to_account_info(),
-                    to: ctx.accounts.token_vault.to_account_info(),
-                    authority: ctx.accounts.signer.to_account_info(),
-                },
-            );
-            token::transfer(cpi_ctx, amount)?;
-        }
+        // The `?` at the end will cause the function to return early in case of an error.
+        // This pattern is common in Rust.
+        anchor_spl::token::transfer(cpi_ctx, state.amount_tokens)?;
 
+        // Mark stage as deposited.
+        state.stage = 1;
         Ok(())
     }
 
-    pub fn betTail(ctx: Context<Flip>, amount: u64) -> ProgramResult {
-        if amount == 0 {
-            return Err(ErrorCode::AmountMustBeGreaterThanZero.into());
-        }
-
-        let coin_flip = &mut ctx.accounts.coin_flip;
-        let c = clock::Clock::get().unwrap();
-
-        // Transfer tokens into the token vault.
-       
-        {
-            let cpi_ctx = CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                token::Transfer {
-                    from: ctx.accounts.stake_from_account.to_account_info(),
-                    to: ctx.accounts.token_vault.to_account_info(),
-                    authority: ctx.accounts.signer.to_account_info(),
-                },
-            );
-            token::transfer(cpi_ctx, amount)?;
-        }
-
-        // if (c.unix_timestamp % 2) == 0 {
-        //     if ctx.accounts.token_vault.amount < ((amount * (coin_flip.win_returns as u64))/100) {
-        //         msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
-
-        //         // Transfer tokens from the vault to user vault.
-        //         {
-        //             let seeds = &[coin_flip.to_account_info().key.as_ref(), &[coin_flip.nonce]];
-        //             let pool_signer = &[&seeds[..]];
-
-        //             let cpi_ctx = CpiContext::new_with_signer(
-        //                 ctx.accounts.token_program.to_account_info(),
-        //                 token::Transfer {
-        //                     from: ctx.accounts.token_vault.to_account_info(),
-        //                     to: ctx.accounts.stake_from_account.to_account_info(),
-        //                     authority: ctx.accounts.pool_signer.to_account_info(),
-        //                 },
-        //                 pool_signer,
-        //             );
-        //             token::transfer(cpi_ctx, ctx.accounts.token_vault.amount)?;
-        //         }
-        //     } else {
-        //         // Transfer tokens from the vault to user vault.
-        //         {
-        //             let seeds = &[coin_flip.to_account_info().key.as_ref(), &[coin_flip.nonce]];
-        //             let pool_signer = &[&seeds[..]];
-
-        //             let cpi_ctx = CpiContext::new_with_signer(
-        //                 ctx.accounts.token_program.to_account_info(),
-        //                 token::Transfer {
-        //                     from: ctx.accounts.token_vault.to_account_info(),
-        //                     to: ctx.accounts.stake_from_account.to_account_info(),
-        //                     authority: ctx.accounts.pool_signer.to_account_info(),
-        //                 },
-        //                 pool_signer,
-        //             );
-        //             token::transfer(cpi_ctx, amount * (100 + coin_flip.win_returns as u64)/100)?;
-        //         }
-
-        //         msg!("Congratulations, You won!");
-        //     }
-        // } else {
-        //     msg!("Sorry, You lost!");
-        // }
-
-        Ok(())
-    }
-
-    // pub fn betHead(ctx: Context<Flip>, amount: u64) -> ProgramResult {
-    //     if amount == 0 {
-    //         return Err(ErrorCode::AmountMustBeGreaterThanZero.into());
-    //     }
-
-    //     let coin_flip = &mut ctx.accounts.coin_flip;
-    //     let c = clock::Clock::get().unwrap();
-
-    //     // Transfer tokens into the token vault.
-    //     {
-    //         let cpi_ctx = CpiContext::new(
-    //             ctx.accounts.token_program.to_account_info(),
-    //             token::Transfer {
-    //                 from: ctx.accounts.stake_from_account.to_account_info(),
-    //                 to: ctx.accounts.token_vault.to_account_info(),
-    //                 authority: ctx.accounts.signer.to_account_info(),
-    //             },
-    //         );
-    //         token::transfer(cpi_ctx, amount)?;
-    //     }
-
-    //     if (c.unix_timestamp % 2) != 0 {
-    //         if ctx.accounts.token_vault.amount < ((amount * (coin_flip.win_returns as u64))/100) {
-    //             msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
-
-    //             // Transfer tokens from the vault to user vault.
-    //             {
-    //                 let seeds = &[coin_flip.to_account_info().key.as_ref(), &[coin_flip.nonce]];
-    //                 let pool_signer = &[&seeds[..]];
-
-    //                 let cpi_ctx = CpiContext::new_with_signer(
-    //                     ctx.accounts.token_program.to_account_info(),
-    //                     token::Transfer {
-    //                         from: ctx.accounts.token_vault.to_account_info(),
-    //                         to: ctx.accounts.stake_from_account.to_account_info(),
-    //                         authority: ctx.accounts.pool_signer.to_account_info(),
-    //                     },
-    //                     pool_signer,
-    //                 );
-    //                 token::transfer(cpi_ctx, ctx.accounts.token_vault.amount)?;
-    //             }
-    //         } else {
-    //             // Transfer tokens from the vault to user vault.
-    //             {
-    //                 let seeds = &[coin_flip.to_account_info().key.as_ref(), &[coin_flip.nonce]];
-    //                 let pool_signer = &[&seeds[..]];
-
-    //                 let cpi_ctx = CpiContext::new_with_signer(
-    //                     ctx.accounts.token_program.to_account_info(),
-    //                     token::Transfer {
-    //                         from: ctx.accounts.token_vault.to_account_info(),
-    //                         to: ctx.accounts.stake_from_account.to_account_info(),
-    //                         authority: ctx.accounts.pool_signer.to_account_info(),
-    //                     },
-    //                     pool_signer,
-    //                 );
-    //                 token::transfer(cpi_ctx, amount * (100 + coin_flip.win_returns as u64)/100)?;
-    //             }
-
-    //             msg!("Congratulations, You won!");
-    //         }
-    //     } else {
-    //         msg!("Sorry, You lost!");
-    //     }
-
-    //     Ok(())
-    // }
 }
 
 #[derive(Accounts)]
-#[instruction(nonce: u8)]
+#[instruction(application_idx: u64, state_bump: u8, wallet_bump: u8)]
 pub struct Initialize<'info> {
+    // Derived PDAs
     #[account(
-        zero
+        init,
+        payer = user_sending,
+        seeds=[b"state".as_ref(), user_sending.key().as_ref(), user_receiving.key.as_ref(), mint_of_token_being_sent.key().as_ref(), application_idx.to_le_bytes().as_ref()],
+        bump = state_bump,
     )]
-    pub coin_flip: Account<'info, CoinFlip>,
+    application_state: Account<'info, State>,
+    #[account(
+        init,
+        payer = user_sending,
+        seeds=[b"wallet".as_ref(), user_sending.key().as_ref(), user_receiving.key.as_ref(), mint_of_token_being_sent.key().as_ref(), application_idx.to_le_bytes().as_ref()],
+        bump = wallet_bump,
+        token::mint=mint_of_token_being_sent,
+        token::authority=application_state,
+    )]
+    escrow_wallet_state: Account<'info, TokenAccount>,
 
+    // Users and accounts in the system
     #[account(mut)]
-    pub signer: Signer<'info>,
+    user_sending: Signer<'info>,                     // Alice
+    user_receiving: AccountInfo<'info>,              // Bob
+    mint_of_token_being_sent: Account<'info, Mint>,  // USDC
 
-    pub system_program: Program<'info, System>,
-
-    pub token_mint: Account<'info, Mint>,
-    pub token_vault: AccountInfo<'info>
-    // Misc.
-    token_program: Program<'info, Token>,
-    // #[account(
-    //     constraint = token_vault.mint == token_mint.key(),
-    //     constraint = token_vault.owner == pool_signer.key()
-    // )]
-    // pub token_vault: Account<'info, TokenAccount>,
-
-    // #[account(
-    //     seeds = [
-    //         coin_flip.to_account_info().key.as_ref()
-    //     ],
-    //     bump = nonce,
-    // )]
-    // pub pool_signer: UncheckedAccount<'info>,
-}
-
-#[derive(Accounts)]
-#[instruction(nonce: u8)]
-pub struct Flip<'info> {
+    // Alice's USDC wallet that has already approved the escrow wallet
     #[account(
         mut,
-        has_one = token_vault
+        constraint=wallet_to_withdraw_from.owner == user_sending.key(),
+        constraint=wallet_to_withdraw_from.mint == mint_of_token_being_sent.key()
     )]
-    pub coin_flip: Account<'info, CoinFlip>,
+    wallet_to_withdraw_from: Account<'info, TokenAccount>,
 
-    #[account(mut)]
-    pub signer: Signer<'info>,
-
-    #[account(
-        constraint = token_vault.owner == pool_signer.key()
-    )]
-    pub token_vault: Account<'info, TokenAccount>,
-
-    // the token account of the user
-    #[account(mut)]
-    pub stake_from_account: Box<Account<'info, TokenAccount>>,
-
-    // #[account(
-    //     seeds = [
-    //         coin_flip.to_account_info().key.as_ref()
-    //     ],
-    //     bump = nonce,
-    // )]
-    // pub pool_signer: UncheckedAccount<'info>,
-
-    // Misc.
+    // Application level accounts
+    system_program: Program<'info, System>,
     token_program: Program<'info, Token>,
+    rent: Sysvar<'info, Rent>,
+    
 }
 
+// 1 State account instance == 1 Safe Pay instance
 #[account]
 #[derive(Default)]
-pub struct CoinFlip {
-    pub win_returns: u8,
-    pub token_mint : Pubkey,
-    pub token_vault: Pubkey,
-}
+pub struct State {
 
+    win_returns: u8,
+    // A primary key that allows us to derive other important accounts
+    idx: u64,
+    
+    // Alice
+    user_sending: Pubkey,
+
+    // Bob
+    user_receiving: Pubkey,
+
+    // The Mint of the token that Alice wants to send to Bob
+    mint_of_token_being_sent: Pubkey,
+
+    // The escrow wallet
+    escrow_wallet: Pubkey,
+
+    // The amount of tokens Alice wants to send to Bob
+    amount_tokens: u64,
+
+    // An enumm that is to represent some kind of state machine
+    stage: u8,
+}
 #[error]
 pub enum ErrorCode {
     #[msg("Amount must be greater than zero.")]
