@@ -1,6 +1,5 @@
 [programs.testnet]
-example1 = "7XsJNG2xDYiz5BQxaYfDuV3y9z1gspj3X7axakK6G6NS"
-coinflip = "9V3jFkqCwyKGN8bhY8mFGdYRwtq6zgCJXnL63J3dBhKM"
+coinflip = "6eUddVvNLGkPmJUfRyAMP4Cj4VabxDS9D2Hgb8VhEvrz"
 
 [registry]
 url = "https://anchor.projectserum.com"
