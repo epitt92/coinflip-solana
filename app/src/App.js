@@ -85,10 +85,12 @@ function App() {
     console.log(program.programId.toBase58())
 
     try {
-      const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-stats")], programID);
+      const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-wallet")], programID);
+      
+      // const [vaultAKey, vaultABump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-stats")], programID);
       
       const amount = new anchor.BN(200000000);
-      console.log("vault", vaultKey.toBase58(), vaultBump)
+      console.log("vaultss", vaultKey.toBase58(), vaultBump)
       await program.rpc.initialize(vaultBump, {
         accounts: {
           coinFlip: vaultKey,
@@ -98,18 +100,19 @@ function App() {
           systemProgram: SystemProgram.programId,
           poolSigner: vaultKey
         }
-      })
-
-      await program.rpc.betTail(amount, {
-        accounts: {
-          coinFlip: vaultKey,
-          signer: provider.wallet.publicKey,
-          tokenVault: vaultKey,
-          stakeFromAccount: provider.wallet.publicKey,
-          tokenProgram: spl.TOKEN_PROGRAM_ID,
-          poolSigner: vaultKey
-        }
-      })
+      });
+      console.log('success');
+      alert();
+      // await program.rpc.betTail(amount, {
+      //   accounts: {
+      //     coinFlip: vaultKey,
+      //     signer: provider.wallet.publicKey,
+      //     tokenVault: vaultKey,
+      //     stakeFromAccount: provider.wallet.publicKey,
+      //     tokenProgram: spl.TOKEN_PROGRAM_ID,
+      //     poolSigner: vaultKey
+      //   }
+      // });
       /* interact with the program via rpc */
       // await program.rpc.create({
       //   accounts: {
