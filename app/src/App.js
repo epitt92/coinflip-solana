@@ -2,7 +2,7 @@ import './App.css';
 import { useState } from 'react';
 import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import {
-  Program, Provider, web3
+  Program, Provider, web3, utils
 } from '@project-serum/anchor';
 import idl from './idl.json';
 
@@ -47,6 +47,14 @@ function App() {
     console.log(program.programId)
 
     try {
+      const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([utils.bytes.utf8.encode("user-stats")], programID);
+
+      // await program.rpc.initialize(vaultBump, {
+      //   accounts: {
+      //     coin_flip: vaultKey
+      //   },
+      //   signers: []
+      // })
       /* interact with the program via rpc */
       await program.rpc.create({
         accounts: {
