@@ -2,8 +2,9 @@ import './App.css';
 import { useState } from 'react';
 import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import {
-  Program, Provider, web3, utils
+  Program, Provider, web3
 } from '@project-serum/anchor';
+import * as anchor from '@project-serum/anchor';
 import idl from './idl.json';
 
 import { getPhantomWallet } from '@solana/wallet-adapter-wallets';
@@ -44,11 +45,13 @@ function App() {
     const provider = await getProvider()
     /* create the program interface combining the idl, program ID, and provider */
     const program = new Program(idl, programID, provider);
-    console.log(program.programId)
+    console.log(program.programId.toBase58())
 
     try {
-      const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([utils.bytes.utf8.encode("user-stats")], programID);
-
+      const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-stats")], programID);
+      
+      const amount = new anchor.BN(20000000);
+      console.log("vault", vaultKey.toBase58(), vaultBump)
       // await program.rpc.initialize(vaultBump, {
       //   accounts: {
       //     coin_flip: vaultKey
