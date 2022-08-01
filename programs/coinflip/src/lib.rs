@@ -17,34 +17,34 @@ pub mod coin_flip {
         state.mint_of_token_being_sent = ctx.accounts.mint_of_token_being_sent.key().clone();
         state.escrow_wallet = ctx.accounts.escrow_wallet_state.key().clone();
         state.amount_tokens = amount;
-        let bump_vector = state_bump.to_le_bytes();
-        let mint_of_token_being_sent_pk = ctx.accounts.mint_of_token_being_sent.key().clone();
-        let application_idx_bytes = application_idx.to_le_bytes();
-        let inner = vec![
-            b"state".as_ref(),
-            ctx.accounts.user_sending.key.as_ref(),
-            ctx.accounts.user_receiving.key.as_ref(),
-            mint_of_token_being_sent_pk.as_ref(), 
-            application_idx_bytes.as_ref(),
-            bump_vector.as_ref(),
-        ];
-        let outer = vec![inner.as_slice()];
+        // let bump_vector = state_bump.to_le_bytes();
+        // let mint_of_token_being_sent_pk = ctx.accounts.mint_of_token_being_sent.key().clone();
+        // let application_idx_bytes = application_idx.to_le_bytes();
+        // let inner = vec![
+        //     b"state".as_ref(),
+        //     ctx.accounts.user_sending.key.as_ref(),
+        //     ctx.accounts.user_receiving.key.as_ref(),
+        //     mint_of_token_being_sent_pk.as_ref(), 
+        //     application_idx_bytes.as_ref(),
+        //     bump_vector.as_ref(),
+        // ];
+        // let outer = vec![inner.as_slice()];
 
         // Below is the actual instruction that we are going to send to the Token program.
-        let transfer_instruction = Transfer{
-            from: ctx.accounts.wallet_to_withdraw_from.to_account_info(),
-            to: ctx.accounts.escrow_wallet_state.to_account_info(),
-            authority: ctx.accounts.user_sending.to_account_info(),
-        };
-        let cpi_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            transfer_instruction,
-            outer.as_slice(),
-        );
+        // let transfer_instruction = Transfer{
+        //     from: ctx.accounts.wallet_to_withdraw_from.to_account_info(),
+        //     to: ctx.accounts.escrow_wallet_state.to_account_info(),
+        //     authority: ctx.accounts.user_sending.to_account_info(),
+        // };
+        // let cpi_ctx = CpiContext::new_with_signer(
+        //     ctx.accounts.token_program.to_account_info(),
+        //     transfer_instruction,
+        //     outer.as_slice(),
+        // );
 
         // The `?` at the end will cause the function to return early in case of an error.
         // This pattern is common in Rust.
-        anchor_spl::token::transfer(cpi_ctx, state.amount_tokens)?;
+        // anchor_spl::token::transfer(cpi_ctx, state.amount_tokens)?;
 
         // Mark stage as deposited.
         state.stage = 1;
