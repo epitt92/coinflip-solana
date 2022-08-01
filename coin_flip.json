@@ -16,22 +16,99 @@
           "isSigner": true
         },
         {
-          "name": "stakeFromAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
           "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenVault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "poolSigner",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "betTail",
+      "accounts": [
+        {
+          "name": "coinFlip",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenVault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeFromAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "betHead",
+      "accounts": [
+        {
+          "name": "coinFlip",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenVault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeFromAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSigner",
           "isMut": false,
           "isSigner": false
         },
@@ -66,6 +143,10 @@
           {
             "name": "tokenVault",
             "type": "publicKey"
+          },
+          {
+            "name": "nonce",
+            "type": "u8"
           }
         ]
       }
