@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{clock, program_option::COption, sysvar};
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
 
-declare_id!("9V3jFkqCwyKGN8bhY8mFGdYRwtq6zgCJXnL63J3dBhKM");
+declare_id!("6eUddVvNLGkPmJUfRyAMP4Cj4VabxDS9D2Hgb8VhEvrz");
 
 #[program]
 pub mod coin_flip {
