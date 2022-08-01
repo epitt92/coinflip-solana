@@ -20,7 +20,9 @@ const wallets = [
 
 const { SystemProgram, Keypair } = web3;
 /* create an account  */
+const stateAccount = Keypair.generate();
 const baseAccount = Keypair.generate();
+const tokenVault = Keypair.generate();
 const opts = {
   preflightCommitment: "processed"
 }
@@ -82,23 +84,24 @@ function App() {
 
     /* create the program interface combining the idl, program ID, and provider */
     const program = new Program(idl, programID, provider);
-    console.log(program.programId.toBase58())
+    console.log(program.programId.toBase58(), baseAccount.publicKey.toBase58())
 
     try {
-      // const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-wallet")], programID);
+      const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-wallet")], programID);
       
-      // const [vaultAKey, vaultABump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-stats")], programID);
+      const [statePDA, stateBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-stats")], programID);
       
-      const amount = new anchor.BN(200000000);
+      const amount = new anchor.BN(0);
       // console.log("vaultss", vaultKey.toBase58(), vaultBump)
-      await program.rpc.initialize({
+      await program.rpc.initialize(stateBump, {
         accounts: {
-          coinFlip: baseAccount.publicKey,
-          tokenVault: baseAccount.publicKey,
+          coinFlip: statePDA,
+          tokenVault: vaultKey,
           tokenMint: mintAddress,
-          signer: provider.wallet.publicKey,
+          signer: baseAccount.publicKey,
+          poolSigner: baseAccount.publicKey,
           systemProgram: SystemProgram.programId
-        }
+        }, signers: [baseAccount]
       });
       console.log('success');
       alert();
