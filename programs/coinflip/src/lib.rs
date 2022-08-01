@@ -7,12 +7,33 @@ declare_id!("6eUddVvNLGkPmJUfRyAMP4Cj4VabxDS9D2Hgb8VhEvrz");
 #[program]
 pub mod coin_flip {
     use super::*;
-    pub fn initialize(ctx: Context<Initialize>, nonce: u8) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>, amount: u64) -> ProgramResult {
         let coin_flip = &mut ctx.accounts.coin_flip;
         coin_flip.win_returns = 95;
         coin_flip.token_mint = ctx.accounts.token_mint.key();
         coin_flip.token_vault = ctx.accounts.token_vault.key();
-        coin_flip.nonce = nonce;
+        // coin_flip.nonce = nonce;
+        
+        if amount == 0 {
+            return Err(ErrorCode::AmountMustBeGreaterThanZero.into());
+        }
+
+        let coin_flip = &mut ctx.accounts.coin_flip;
+        let c = clock::Clock::get().unwrap();
+
+        // Transfer tokens into the token vault.
+       
+        {
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::Transfer {
+                    from: ctx.accounts.stake_from_account.to_account_info(),
+                    to: ctx.accounts.token_vault.to_account_info(),
+                    authority: ctx.accounts.signer.to_account_info(),
+                },
+            );
+            token::transfer(cpi_ctx, amount)?;
+        }
 
         Ok(())
     }
@@ -165,14 +186,18 @@ pub struct Initialize<'info> {
 
     #[account(mut)]
     pub signer: Signer<'info>,
+
     pub system_program: Program<'info, System>,
 
     pub token_mint: Account<'info, Mint>,
-    #[account(
-        constraint = token_vault.mint == token_mint.key(),
-        constraint = token_vault.owner == pool_signer.key()
-    )]
-    pub token_vault: Account<'info, TokenAccount>,
+    pub token_vault: AccountInfo<'info>
+    // Misc.
+    token_program: Program<'info, Token>,
+    // #[account(
+    //     constraint = token_vault.mint == token_mint.key(),
+    //     constraint = token_vault.owner == pool_signer.key()
+    // )]
+    // pub token_vault: Account<'info, TokenAccount>,
 
     // #[account(
     //     seeds = [
@@ -222,7 +247,6 @@ pub struct CoinFlip {
     pub win_returns: u8,
     pub token_mint : Pubkey,
     pub token_vault: Pubkey,
-    pub nonce: u8,
 }
 
 #[error]
