@@ -26,33 +26,18 @@ pub mod coin_flip {
         let c = clock::Clock::get().unwrap();
 
         // Transfer tokens into the token vault.
-        // Below is the actual instruction that we are going to send to the Token program.
-        let transfer_instruction = Transfer{
-            from: ctx.accounts.stake_from_account.to_account_info(),
-            to: ctx.accounts.token_vault.to_account_info(),
-            authority: ctx.accounts.signer.to_account_info(),
-        };
-        let cpi_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            transfer_instruction,
-            outer.as_slice(),
-        );
-
-        // The `?` at the end will cause the function to return early in case of an error.
-        // This pattern is common in Rust.
-        token::transfer(cpi_ctx, amount)?;
-
-        // {
-        //     let cpi_ctx = CpiContext::new(
-        //         ctx.accounts.token_program.to_account_info(),
-        //         token::Transfer {
-        //             from: ctx.accounts.stake_from_account.to_account_info(),
-        //             to: ctx.accounts.token_vault.to_account_info(),
-        //             authority: ctx.accounts.signer.to_account_info(),
-        //         },
-        //     );
-        //     token::transfer(cpi_ctx, amount)?;
-        // }
+       
+        {
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::Transfer {
+                    from: ctx.accounts.stake_from_account.to_account_info(),
+                    to: ctx.accounts.token_vault.to_account_info(),
+                    authority: ctx.accounts.signer.to_account_info(),
+                },
+            );
+            token::transfer(cpi_ctx, amount)?;
+        }
 
         // if (c.unix_timestamp % 2) == 0 {
         //     if ctx.accounts.token_vault.amount < ((amount * (coin_flip.win_returns as u64))/100) {
@@ -189,13 +174,13 @@ pub struct Initialize<'info> {
     )]
     pub token_vault: Account<'info, TokenAccount>,
 
-    #[account(
-        seeds = [
-            coin_flip.to_account_info().key.as_ref()
-        ],
-        bump = nonce,
-    )]
-    pub pool_signer: UncheckedAccount<'info>,
+    // #[account(
+    //     seeds = [
+    //         coin_flip.to_account_info().key.as_ref()
+    //     ],
+    //     bump = nonce,
+    // )]
+    // pub pool_signer: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]
@@ -219,13 +204,13 @@ pub struct Flip<'info> {
     #[account(mut)]
     pub stake_from_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        seeds = [
-            coin_flip.to_account_info().key.as_ref()
-        ],
-        bump = nonce,
-    )]
-    pub pool_signer: UncheckedAccount<'info>,
+    // #[account(
+    //     seeds = [
+    //         coin_flip.to_account_info().key.as_ref()
+    //     ],
+    //     bump = nonce,
+    // )]
+    // pub pool_signer: UncheckedAccount<'info>,
 
     // Misc.
     token_program: Program<'info, Token>,

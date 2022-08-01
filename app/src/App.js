@@ -87,18 +87,17 @@ function App() {
     try {
       const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-wallet")], programID);
       
-      // const [vaultAKey, vaultABump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-stats")], programID);
+      const [vaultAKey, vaultABump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-stats")], programID);
       
       const amount = new anchor.BN(200000000);
       console.log("vaultss", vaultKey.toBase58(), vaultBump)
       await program.rpc.initialize(vaultBump, {
         accounts: {
-          coinFlip: vaultKey,
+          coinFlip: vaultAKey,
           tokenVault: vaultKey,
           tokenMint: mintAddress,
           signer: provider.wallet.publicKey,
-          systemProgram: SystemProgram.programId,
-          poolSigner: vaultKey
+          systemProgram: SystemProgram.programId
         }
       });
       console.log('success');
