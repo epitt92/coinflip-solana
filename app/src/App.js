@@ -7,6 +7,8 @@ import {
 import * as anchor from '@project-serum/anchor';
 import idl from './idl.json';
 
+import * as spl from '@solana/spl-token';
+
 import { getPhantomWallet } from '@solana/wallet-adapter-wallets';
 import { useWallet, WalletProvider, ConnectionProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
@@ -40,9 +42,44 @@ function App() {
     return provider;
   }
 
+  const createMint = async (connection) => {
+    const provider = await getProvider()
+
+    const tokenMint = new anchor.web3.Keypair();
+    const lamportsForMint = await provider.connection.getMinimumBalanceForRentExemption(spl.MintLayout.span);
+    let tx = new anchor.web3.Transaction();
+
+    // Allocate mint
+    tx.add(
+        anchor.web3.SystemProgram.createAccount({
+            programId: spl.TOKEN_PROGRAM_ID,
+            space: spl.MintLayout.span,
+            fromPubkey: provider.wallet.publicKey,
+            newAccountPubkey: tokenMint.publicKey,
+            lamports: lamportsForMint,
+        })
+    )
+    // Allocate wallet account
+    tx.add(
+        spl.Token.createInitMintInstruction(
+            spl.TOKEN_PROGRAM_ID,
+            tokenMint.publicKey,
+            6,
+            provider.wallet.publicKey,
+            provider.wallet.publicKey,
+        )
+    );
+    const signature = await provider.send(tx, [tokenMint]);
+
+    console.log(`[${tokenMint.publicKey}] Created new mint account at ${signature}`);
+    return tokenMint.publicKey;
+  }
+
   async function createCounter() {    
     console.log('started')
     const provider = await getProvider()
+    let mintAddress = await createMint(provider.connection);
+
     /* create the program interface combining the idl, program ID, and provider */
     const program = new Program(idl, programID, provider);
     console.log(program.programId.toBase58())
@@ -50,27 +87,42 @@ function App() {
     try {
       const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-stats")], programID);
       
-      const amount = new anchor.BN(20000000);
+      const amount = new anchor.BN(200000000);
       console.log("vault", vaultKey.toBase58(), vaultBump)
-      // await program.rpc.initialize(vaultBump, {
-      //   accounts: {
-      //     coin_flip: vaultKey
-      //   },
-      //   signers: []
-      // })
-      /* interact with the program via rpc */
-      await program.rpc.create({
+      await program.rpc.initialize(vaultBump, {
         accounts: {
-          baseAccount: baseAccount.publicKey,
-          user: provider.wallet.publicKey,
+          coinFlip: vaultKey,
+          tokenVault: vaultKey,
+          tokenMint: mintAddress,
+          signer: provider.wallet.publicKey,
           systemProgram: SystemProgram.programId,
-        },
-        signers: [baseAccount]
-      });
+          poolSigner: vaultKey
+        }
+      })
 
-      const account = await program.account.baseAccount.fetch(baseAccount.publicKey);
-      console.log('account: ', account);
-      setValue(account.count.toString());
+      await program.rpc.betTail(amount, {
+        accounts: {
+          coinFlip: vaultKey,
+          signer: provider.wallet.publicKey,
+          tokenVault: vaultKey,
+          stakeFromAccount: provider.wallet.publicKey,
+          tokenProgram: spl.TOKEN_PROGRAM_ID,
+          poolSigner: vaultKey
+        }
+      })
+      /* interact with the program via rpc */
+      // await program.rpc.create({
+      //   accounts: {
+      //     baseAccount: baseAccount.publicKey,
+      //     user: provider.wallet.publicKey,
+      //     systemProgram: SystemProgram.programId,
+      //   },
+      //   signers: [baseAccount]
+      // });
+
+      // const account = await program.account.baseAccount.fetch(baseAccount.publicKey);
+      // console.log('account: ', account);
+      // setValue(account.count.toString());
     } catch (err) {
       console.log("Transaction error: ", err);
     }
