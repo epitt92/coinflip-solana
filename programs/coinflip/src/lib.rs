@@ -2,17 +2,17 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{clock, program_option::COption, sysvar};
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
 
-declare_id!("9V3jFkqCwyKGN8bhY8mFGdYRwtq6zgCJXnL63J3dBhKM");
+declare_id!("6eUddVvNLGkPmJUfRyAMP4Cj4VabxDS9D2Hgb8VhEvrz");
 
 #[program]
 pub mod coin_flip {
     use super::*;
-    pub fn initialize(ctx: Context<Initialize>, nonce: u8) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>,  state_bump: u8, _wallet_bump: u8,) -> ProgramResult {
         let coin_flip = &mut ctx.accounts.coin_flip;
         coin_flip.win_returns = 95;
-        coin_flip.token_mint = ctx.accounts.token_mint.key();
-        coin_flip.token_vault = ctx.accounts.token_vault.key();
-        coin_flip.nonce = nonce;
+        coin_flip.token_mint = ctx.accounts.token_mint.key().clone();
+        coin_flip.token_vault = ctx.accounts.token_vault.key().clone();
+        coin_flip.nonce = state_bump;
 
         Ok(())
     }
@@ -155,31 +155,29 @@ pub mod coin_flip {
 }
 
 #[derive(Accounts)]
-#[instruction(nonce: u8)]
+#[instruction(state_bump: u8, wallet_bump: u8)]
 pub struct Initialize<'info> {
     #[account(
-        zero
+        init,
+        seeds=[b"state".as_ref()],
+        bump = state_bump,
     )]
     pub coin_flip: Account<'info, CoinFlip>,
 
     #[account(mut)]
     pub signer: Signer<'info>,
-    pub system_program: Program<'info, System>,
 
-    pub token_mint: Account<'info, Mint>,
     #[account(
-        constraint = token_vault.mint == token_mint.key(),
-        constraint = token_vault.owner == pool_signer.key()
+        init,
+        seeds=[b"wallet".as_ref()],
+        bump = wallet_bump,
+        token::mint=mint_of_token_being_sent,
+        token::authority=application_state,
     )]
     pub token_vault: Account<'info, TokenAccount>,
 
-    #[account(
-        seeds = [
-            coin_flip.to_account_info().key.as_ref()
-        ],
-        bump = nonce,
-    )]
-    pub pool_signer: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
+    pub token_mint: Account<'info, Mint>,
 }
 
 #[derive(Accounts)]
