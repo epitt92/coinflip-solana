@@ -7,7 +7,7 @@ declare_id!("6eUddVvNLGkPmJUfRyAMP4Cj4VabxDS9D2Hgb8VhEvrz");
 #[program]
 pub mod coin_flip {
     use super::*;
-    pub fn initialize(ctx: Context<Initialize>,  state_bump: u8, _wallet_bump: u8,) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>,  state_bump: u8, wallet_bump: u8,) -> ProgramResult {
         let coin_flip = &mut ctx.accounts.coin_flip;
         coin_flip.win_returns = 95;
         coin_flip.token_mint = ctx.accounts.token_mint.key().clone();
@@ -159,6 +159,7 @@ pub mod coin_flip {
 pub struct Initialize<'info> {
     #[account(
         init,
+        payer = signer,
         seeds=[b"state".as_ref()],
         bump = state_bump,
     )]
@@ -169,6 +170,7 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
+        payer = signer,
         seeds=[b"wallet".as_ref()],
         bump = wallet_bump,
         token::mint=mint_of_token_being_sent,
