@@ -184,7 +184,7 @@ impl<'info> Initialize<'info> {
     fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         let cpi_accounts = Transfer {
             from: self
-                .initializer_deposit_token_account
+                .initializer_user_account
                 .to_account_info()
                 .clone(),
             to: self.vault_account.to_account_info().clone(),
