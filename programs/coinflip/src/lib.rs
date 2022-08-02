@@ -1,231 +1,275 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{clock, program_option::COption, sysvar};
-use anchor_spl::token::{self, Mint, Token, TokenAccount};
+use anchor_spl::token::{self, CloseAccount, Mint, SetAuthority, TokenAccount, Transfer};
+use spl_token::instruction::AuthorityType;
 
-declare_id!("6eUddVvNLGkPmJUfRyAMP4Cj4VabxDS9D2Hgb8VhEvrz");
+declare_id!("6m7hFFRbDoCAN5bTm592crzaXNV3qkYwt6aaEzd1rkg6");
 
 #[program]
-pub mod coin_flip {
+pub mod anchor_escrow {
     use super::*;
-    pub fn initialize(ctx: Context<Initialize>,  state_bump: u8, wallet_bump: u8,) -> ProgramResult {
-        let coin_flip = &mut ctx.accounts.coin_flip;
-        coin_flip.win_returns = 95;
-        coin_flip.token_mint = ctx.accounts.token_mint.key().clone();
-        coin_flip.token_vault = ctx.accounts.token_vault.key().clone();
-        coin_flip.nonce = state_bump;
+
+    const ESCROW_PDA_SEED: &[u8] = b"escrow";
+
+    pub fn initialize(
+        ctx: Context<Initialize>,
+        _vault_account_bump: u8,
+        initializer_amount: u64,
+        taker_amount: u64,
+    ) -> Result<()> {
+        ctx.accounts.escrow_account.initializer_key = *ctx.accounts.initializer.key;
+        ctx.accounts
+            .escrow_account
+            .initializer_deposit_token_account = *ctx
+            .accounts
+            .initializer_deposit_token_account
+            .to_account_info()
+            .key;
+        ctx.accounts
+            .escrow_account
+            .initializer_receive_token_account = *ctx
+            .accounts
+            .initializer_receive_token_account
+            .to_account_info()
+            .key;
+        ctx.accounts.escrow_account.initializer_amount = initializer_amount;
+        ctx.accounts.escrow_account.taker_amount = taker_amount;
+
+        let (vault_authority, _vault_authority_bump) =
+            Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
+        token::set_authority(
+            ctx.accounts.into_set_authority_context(),
+            AuthorityType::AccountOwner,
+            Some(vault_authority),
+        )?;
+
+        token::transfer(
+            ctx.accounts.into_transfer_to_pda_context(),
+            ctx.accounts.escrow_account.initializer_amount,
+        )?;
 
         Ok(())
     }
 
-    pub fn betTail(ctx: Context<Flip>, amount: u64) -> ProgramResult {
-        if amount == 0 {
-            return Err(ErrorCode::AmountMustBeGreaterThanZero.into());
-        }
+    pub fn cancel(ctx: Context<Cancel>) -> Result<()> {
+        let (_vault_authority, vault_authority_bump) =
+            Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
+        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[vault_authority_bump]];
 
-        let coin_flip = &mut ctx.accounts.coin_flip;
-        let c = clock::Clock::get().unwrap();
+        token::transfer(
+            ctx.accounts
+                .into_transfer_to_initializer_context()
+                .with_signer(&[&authority_seeds[..]]),
+            ctx.accounts.escrow_account.initializer_amount,
+        )?;
 
-        // Transfer tokens into the token vault.
-        {
-            let cpi_ctx = CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                token::Transfer {
-                    from: ctx.accounts.stake_from_account.to_account_info(),
-                    to: ctx.accounts.token_vault.to_account_info(),
-                    authority: ctx.accounts.signer.to_account_info(),
-                },
-            );
-            token::transfer(cpi_ctx, amount)?;
-        }
-
-        if (c.unix_timestamp % 2) == 0 {
-            if ctx.accounts.token_vault.amount < ((amount * (coin_flip.win_returns as u64))/100) {
-                msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
-
-                // Transfer tokens from the vault to user vault.
-                {
-                    let seeds = &[coin_flip.to_account_info().key.as_ref(), &[coin_flip.nonce]];
-                    let pool_signer = &[&seeds[..]];
-
-                    let cpi_ctx = CpiContext::new_with_signer(
-                        ctx.accounts.token_program.to_account_info(),
-                        token::Transfer {
-                            from: ctx.accounts.token_vault.to_account_info(),
-                            to: ctx.accounts.stake_from_account.to_account_info(),
-                            authority: ctx.accounts.pool_signer.to_account_info(),
-                        },
-                        pool_signer,
-                    );
-                    token::transfer(cpi_ctx, ctx.accounts.token_vault.amount)?;
-                }
-            } else {
-                // Transfer tokens from the vault to user vault.
-                {
-                    let seeds = &[coin_flip.to_account_info().key.as_ref(), &[coin_flip.nonce]];
-                    let pool_signer = &[&seeds[..]];
-
-                    let cpi_ctx = CpiContext::new_with_signer(
-                        ctx.accounts.token_program.to_account_info(),
-                        token::Transfer {
-                            from: ctx.accounts.token_vault.to_account_info(),
-                            to: ctx.accounts.stake_from_account.to_account_info(),
-                            authority: ctx.accounts.pool_signer.to_account_info(),
-                        },
-                        pool_signer,
-                    );
-                    token::transfer(cpi_ctx, amount * (100 + coin_flip.win_returns as u64)/100)?;
-                }
-
-                msg!("Congratulations, You won!");
-            }
-        } else {
-            msg!("Sorry, You lost!");
-        }
+        token::close_account(
+            ctx.accounts
+                .into_close_context()
+                .with_signer(&[&authority_seeds[..]]),
+        )?;
 
         Ok(())
     }
 
-    pub fn betHead(ctx: Context<Flip>, amount: u64) -> ProgramResult {
-        if amount == 0 {
-            return Err(ErrorCode::AmountMustBeGreaterThanZero.into());
-        }
+    pub fn exchange(ctx: Context<Exchange>) -> Result<()> {
+        let (_vault_authority, vault_authority_bump) =
+            Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
+        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[vault_authority_bump]];
 
-        let coin_flip = &mut ctx.accounts.coin_flip;
-        let c = clock::Clock::get().unwrap();
+        token::transfer(
+            ctx.accounts.into_transfer_to_initializer_context(),
+            ctx.accounts.escrow_account.taker_amount,
+        )?;
 
-        // Transfer tokens into the token vault.
-        {
-            let cpi_ctx = CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                token::Transfer {
-                    from: ctx.accounts.stake_from_account.to_account_info(),
-                    to: ctx.accounts.token_vault.to_account_info(),
-                    authority: ctx.accounts.signer.to_account_info(),
-                },
-            );
-            token::transfer(cpi_ctx, amount)?;
-        }
+        token::transfer(
+            ctx.accounts
+                .into_transfer_to_taker_context()
+                .with_signer(&[&authority_seeds[..]]),
+            ctx.accounts.escrow_account.initializer_amount,
+        )?;
 
-        if (c.unix_timestamp % 2) != 0 {
-            if ctx.accounts.token_vault.amount < ((amount * (coin_flip.win_returns as u64))/100) {
-                msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
-
-                // Transfer tokens from the vault to user vault.
-                {
-                    let seeds = &[coin_flip.to_account_info().key.as_ref(), &[coin_flip.nonce]];
-                    let pool_signer = &[&seeds[..]];
-
-                    let cpi_ctx = CpiContext::new_with_signer(
-                        ctx.accounts.token_program.to_account_info(),
-                        token::Transfer {
-                            from: ctx.accounts.token_vault.to_account_info(),
-                            to: ctx.accounts.stake_from_account.to_account_info(),
-                            authority: ctx.accounts.pool_signer.to_account_info(),
-                        },
-                        pool_signer,
-                    );
-                    token::transfer(cpi_ctx, ctx.accounts.token_vault.amount)?;
-                }
-            } else {
-                // Transfer tokens from the vault to user vault.
-                {
-                    let seeds = &[coin_flip.to_account_info().key.as_ref(), &[coin_flip.nonce]];
-                    let pool_signer = &[&seeds[..]];
-
-                    let cpi_ctx = CpiContext::new_with_signer(
-                        ctx.accounts.token_program.to_account_info(),
-                        token::Transfer {
-                            from: ctx.accounts.token_vault.to_account_info(),
-                            to: ctx.accounts.stake_from_account.to_account_info(),
-                            authority: ctx.accounts.pool_signer.to_account_info(),
-                        },
-                        pool_signer,
-                    );
-                    token::transfer(cpi_ctx, amount * (100 + coin_flip.win_returns as u64)/100)?;
-                }
-
-                msg!("Congratulations, You won!");
-            }
-        } else {
-            msg!("Sorry, You lost!");
-        }
+        token::close_account(
+            ctx.accounts
+                .into_close_context()
+                .with_signer(&[&authority_seeds[..]]),
+        )?;
 
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-#[instruction(state_bump: u8, wallet_bump: u8)]
+#[instruction(vault_account_bump: u8, initializer_amount: u64)]
 pub struct Initialize<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut, signer)]
+    pub initializer: AccountInfo<'info>,
+    pub mint: Account<'info, Mint>,
     #[account(
-        seeds=[b"state".as_ref()],
-        bump = state_bump,
+        init,
+        seeds = [b"token-seed".as_ref()],
+        bump,
+        payer = initializer,
+        token::mint = mint,
+        token::authority = initializer,
     )]
-    pub coin_flip: Account<'info, CoinFlip>,
-
-    #[account(mut)]
-    pub signer: Signer<'info>,
-
-    #[account(
-        seeds=[b"wallet".as_ref()],
-        bump = wallet_bump,
-        token::mint=token_mint,
-        token::authority=coin_flip,
-    )]
-    pub token_vault: Account<'info, TokenAccount>,
-
-    pub token_mint: Account<'info, Mint>,
-    // Misc.
-    system_program: Program<'info, System>,
-    token_program: Program<'info, Token>,
-    rent: Sysvar<'info, Rent>,
-
-}
-
-#[derive(Accounts)]
-#[instruction(nonce: u8)]
-pub struct Flip<'info> {
+    pub vault_account: Account<'info, TokenAccount>,
     #[account(
         mut,
-        has_one = token_vault
+        constraint = initializer_deposit_token_account.amount >= initializer_amount
     )]
-    pub coin_flip: Account<'info, CoinFlip>,
+    pub initializer_deposit_token_account: Account<'info, TokenAccount>,
+    pub initializer_receive_token_account: Account<'info, TokenAccount>,
+    #[account(zero)]
+    pub escrow_account: Box<Account<'info, EscrowAccount>>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub system_program: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub token_program: AccountInfo<'info>,
+}
 
+#[derive(Accounts)]
+pub struct Cancel<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut, signer)]
+    pub initializer: AccountInfo<'info>,
     #[account(mut)]
-    pub signer: Signer<'info>,
-
-    #[account(
-        constraint = token_vault.owner == pool_signer.key()
-    )]
-    pub token_vault: Account<'info, TokenAccount>,
-
-    // the token account of the user
+    pub vault_account: Account<'info, TokenAccount>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub vault_authority: AccountInfo<'info>,
     #[account(mut)]
-    pub stake_from_account: Box<Account<'info, TokenAccount>>,
-
+    pub initializer_deposit_token_account: Account<'info, TokenAccount>,
     #[account(
-        seeds = [
-            coin_flip.to_account_info().key.as_ref()
-        ],
-        bump = nonce,
+        mut,
+        constraint = escrow_account.initializer_key == *initializer.key,
+        constraint = escrow_account.initializer_deposit_token_account == *initializer_deposit_token_account.to_account_info().key,
+        close = initializer
     )]
-    pub pool_signer: UncheckedAccount<'info>,
+    pub escrow_account: Box<Account<'info, EscrowAccount>>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub token_program: AccountInfo<'info>,
+}
 
-    // Misc.
-    token_program: Program<'info, Token>,
+#[derive(Accounts)]
+pub struct Exchange<'info> {
+    #[account(signer)]
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub taker: AccountInfo<'info>,
+    #[account(mut)]
+    pub taker_deposit_token_account: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub taker_receive_token_account: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub initializer_deposit_token_account: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub initializer_receive_token_account: Box<Account<'info, TokenAccount>>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut)]
+    pub initializer: AccountInfo<'info>,
+    #[account(
+        mut,
+        constraint = escrow_account.taker_amount <= taker_deposit_token_account.amount,
+        constraint = escrow_account.initializer_deposit_token_account == *initializer_deposit_token_account.to_account_info().key,
+        constraint = escrow_account.initializer_receive_token_account == *initializer_receive_token_account.to_account_info().key,
+        constraint = escrow_account.initializer_key == *initializer.key,
+        close = initializer
+    )]
+    pub escrow_account: Box<Account<'info, EscrowAccount>>,
+    #[account(mut)]
+    pub vault_account: Box<Account<'info, TokenAccount>>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub vault_authority: AccountInfo<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub token_program: AccountInfo<'info>,
 }
 
 #[account]
-#[derive(Default)]
-pub struct CoinFlip {
-    pub win_returns: u8,
-    pub token_mint: Pubkey,
-    pub token_vault: Pubkey,
-    pub nonce: u8,
+pub struct EscrowAccount {
+    pub initializer_key: Pubkey,
+    pub initializer_deposit_token_account: Pubkey,
+    pub initializer_receive_token_account: Pubkey,
+    pub initializer_amount: u64,
+    pub taker_amount: u64,
 }
 
-#[error]
-pub enum ErrorCode {
-    #[msg("Amount must be greater than zero.")]
-    AmountMustBeGreaterThanZero,
+impl<'info> Initialize<'info> {
+    fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        let cpi_accounts = Transfer {
+            from: self
+                .initializer_deposit_token_account
+                .to_account_info()
+                .clone(),
+            to: self.vault_account.to_account_info().clone(),
+            authority: self.initializer.clone(),
+        };
+        CpiContext::new(self.token_program.clone(), cpi_accounts)
+    }
+
+    fn into_set_authority_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
+        let cpi_accounts = SetAuthority {
+            account_or_mint: self.vault_account.to_account_info().clone(),
+            current_authority: self.initializer.clone(),
+        };
+        CpiContext::new(self.token_program.clone(), cpi_accounts)
+    }
+}
+
+impl<'info> Cancel<'info> {
+    fn into_transfer_to_initializer_context(
+        &self,
+    ) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        let cpi_accounts = Transfer {
+            from: self.vault_account.to_account_info().clone(),
+            to: self
+                .initializer_deposit_token_account
+                .to_account_info()
+                .clone(),
+            authority: self.vault_authority.clone(),
+        };
+        CpiContext::new(self.token_program.clone(), cpi_accounts)
+    }
+
+    fn into_close_context(&self) -> CpiContext<'_, '_, '_, 'info, CloseAccount<'info>> {
+        let cpi_accounts = CloseAccount {
+            account: self.vault_account.to_account_info().clone(),
+            destination: self.initializer.clone(),
+            authority: self.vault_authority.clone(),
+        };
+        CpiContext::new(self.token_program.clone(), cpi_accounts)
+    }
+}
+
+impl<'info> Exchange<'info> {
+    fn into_transfer_to_initializer_context(
+        &self,
+    ) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        let cpi_accounts = Transfer {
+            from: self.taker_deposit_token_account.to_account_info().clone(),
+            to: self
+                .initializer_receive_token_account
+                .to_account_info()
+                .clone(),
+            authority: self.taker.clone(),
+        };
+        CpiContext::new(self.token_program.clone(), cpi_accounts)
+    }
+
+    fn into_transfer_to_taker_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        let cpi_accounts = Transfer {
+            from: self.vault_account.to_account_info().clone(),
+            to: self.taker_receive_token_account.to_account_info().clone(),
+            authority: self.vault_authority.clone(),
+        };
+        CpiContext::new(self.token_program.clone(), cpi_accounts)
+    }
+
+    fn into_close_context(&self) -> CpiContext<'_, '_, '_, 'info, CloseAccount<'info>> {
+        let cpi_accounts = CloseAccount {
+            account: self.vault_account.to_account_info().clone(),
+            destination: self.initializer.clone(),
+            authority: self.vault_authority.clone(),
+        };
+        CpiContext::new(self.token_program.clone(), cpi_accounts)
+    }
 }
