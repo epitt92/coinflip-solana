@@ -173,13 +173,15 @@ pub struct Initialize<'info> {
         payer = signer,
         seeds=[b"wallet".as_ref()],
         bump = wallet_bump,
-        token::mint=mint_of_token_being_sent,
-        token::authority=application_state,
+        token::mint=token_mint,
+        token::authority=coin_flip,
     )]
     pub token_vault: Account<'info, TokenAccount>,
 
     pub system_program: Program<'info, System>,
     pub token_mint: Account<'info, Mint>,
+    // Misc.
+    token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
