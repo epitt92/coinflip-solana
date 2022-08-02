@@ -99,7 +99,8 @@ pub struct Initialize<'info> {
         init,
         seeds = [b"token-seed".as_ref()],
         bump,
-        payer = initializer
+        payer = initializer,
+        space = 10240,
     )]
     pub vault_account: Account<'info, TokenAccount>,
     #[account(
