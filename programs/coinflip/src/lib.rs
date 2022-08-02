@@ -14,8 +14,8 @@ pub mod anchor_escrow {
         ctx: Context<Initialize>,
         _vault_account_bump: u8,
         initializer_amount: u64,
-        taker_amount: u64,
-    ) -> Result<()> {
+        taker_amount: u64
+    ) -> ProgramResult {
         ctx.accounts.escrow_account.initializer_key = *ctx.accounts.initializer.key;
         ctx.accounts
             .escrow_account
@@ -50,7 +50,7 @@ pub mod anchor_escrow {
         Ok(())
     }
 
-    pub fn cancel(ctx: Context<Cancel>) -> Result<()> {
+    pub fn cancel(ctx: Context<Cancel>) -> ProgramResult {
         let (_vault_authority, vault_authority_bump) =
             Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
         let authority_seeds = &[&ESCROW_PDA_SEED[..], &[vault_authority_bump]];
@@ -71,7 +71,7 @@ pub mod anchor_escrow {
         Ok(())
     }
 
-    pub fn exchange(ctx: Context<Exchange>) -> Result<()> {
+    pub fn exchange(ctx: Context<Exchange>) -> ProgramResult {
         let (_vault_authority, vault_authority_bump) =
             Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
         let authority_seeds = &[&ESCROW_PDA_SEED[..], &[vault_authority_bump]];
