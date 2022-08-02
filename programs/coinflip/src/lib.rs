@@ -158,8 +158,6 @@ pub mod coin_flip {
 #[instruction(state_bump: u8, wallet_bump: u8)]
 pub struct Initialize<'info> {
     #[account(
-        init,
-        payer = signer,
         seeds=[b"state".as_ref()],
         bump = state_bump,
     )]
@@ -169,8 +167,6 @@ pub struct Initialize<'info> {
     pub signer: Signer<'info>,
 
     #[account(
-        init,
-        payer = signer,
         seeds=[b"wallet".as_ref()],
         bump = wallet_bump,
         token::mint=token_mint,
