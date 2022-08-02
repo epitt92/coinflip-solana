@@ -30,7 +30,7 @@ const opts = {
 }
 const programID = new PublicKey(idl.metadata.address);
 
-const network = clusterApiUrl('testnet');
+const network = clusterApiUrl('devnet');
 
 function App() {
   const [value, setValue] = useState(null);
@@ -202,14 +202,11 @@ function App() {
       await program.rpc.initialize(
         vault_account_bump,
         new anchor.BN(initializerAmount),
-        new anchor.BN(takerAmount),
         {
           accounts: {
-            initializer: initializerMainAccount.publicKey,
+            initializer: provider.wallet.publicKey,
             vaultAccount: vault_account_pda,
-            mint: mintA.publicKey,
-            initializerDepositTokenAccount: initializerTokenAccountA,
-            initializerReceiveTokenAccount: initializerTokenAccountB,
+            initializerUserAccount: provider.wallet.publicKey,
             escrowAccount: escrowAccount.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
@@ -218,7 +215,7 @@ function App() {
           instructions: [
             await program.account.escrowAccount.createInstruction(escrowAccount),
           ],
-          signers: [escrowAccount, initializerMainAccount],
+          signers: [escrowAccount],
         }
       );
   

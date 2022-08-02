@@ -11,23 +11,13 @@
           "isSigner": true
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "vaultAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "initializerDepositTokenAccount",
+          "name": "initializerUserAccount",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "initializerReceiveTokenAccount",
-          "isMut": false,
           "isSigner": false
         },
         {
@@ -57,106 +47,10 @@
           "type": "u8"
         },
         {
-          "name": "initializerAmount",
-          "type": "u64"
-        },
-        {
-          "name": "takerAmount",
+          "name": "amount",
           "type": "u64"
         }
       ]
-    },
-    {
-      "name": "cancel",
-      "accounts": [
-        {
-          "name": "initializer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "vaultAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "vaultAuthority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "initializerDepositTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "escrowAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "exchange",
-      "accounts": [
-        {
-          "name": "taker",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "takerDepositTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "takerReceiveTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "initializerDepositTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "initializerReceiveTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "initializer",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "escrowAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "vaultAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "vaultAuthority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -170,15 +64,11 @@
             "type": "publicKey"
           },
           {
-            "name": "initializerDepositTokenAccount",
+            "name": "initializerUserAccount",
             "type": "publicKey"
           },
           {
-            "name": "initializerReceiveTokenAccount",
-            "type": "publicKey"
-          },
-          {
-            "name": "initializerAmount",
+            "name": "amount",
             "type": "u64"
           },
           {
@@ -190,6 +80,6 @@
     }
   ],
   "metadata": {
-    "address": "Fz6bcgCzda5qxKnk7QrDaxYNZBokxdjeCL3QMWKeXGfP"
+    "address": "8uay33TErnMNRYFrsQTGsXqK1jzSZq9hDXGvEZAACPmd"
   }
 }
