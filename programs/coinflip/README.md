@@ -1,1 +1,0 @@
-CoinFlip Game by Syafiq.

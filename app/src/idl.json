@@ -1,19 +1,39 @@
 {
   "version": "0.1.0",
-  "name": "coin_flip",
+  "name": "anchor_escrow",
   "instructions": [
     {
       "name": "initialize",
       "accounts": [
         {
-          "name": "coinFlip",
+          "name": "initializer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "signer",
+          "name": "initializerDepositTokenAccount",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
+        },
+        {
+          "name": "initializerReceiveTokenAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -21,53 +41,112 @@
           "isSigner": false
         },
         {
-          "name": "tokenMint",
+          "name": "rent",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "tokenVault",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "poolSigner",
+          "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "nonce",
+          "name": "vaultAccountBump",
           "type": "u8"
+        },
+        {
+          "name": "initializerAmount",
+          "type": "u64"
+        },
+        {
+          "name": "takerAmount",
+          "type": "u64"
         }
       ]
     },
     {
-      "name": "betTail",
+      "name": "cancel",
       "accounts": [
         {
-          "name": "coinFlip",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "signer",
+          "name": "initializer",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "tokenVault",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "stakeFromAccount",
+          "name": "vaultAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "poolSigner",
+          "name": "vaultAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "initializerDepositTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "exchange",
+      "accounts": [
+        {
+          "name": "taker",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "takerDepositTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "takerReceiveTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "initializerDepositTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "initializerReceiveTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "initializer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultAuthority",
           "isMut": false,
           "isSigner": false
         },
@@ -77,95 +156,40 @@
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "betHead",
-      "accounts": [
-        {
-          "name": "coinFlip",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "signer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "tokenVault",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "stakeFromAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "poolSigner",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
+      "args": []
     }
   ],
   "accounts": [
     {
-      "name": "CoinFlip",
+      "name": "EscrowAccount",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "winReturns",
-            "type": "u8"
-          },
-          {
-            "name": "tokenMint",
+            "name": "initializerKey",
             "type": "publicKey"
           },
           {
-            "name": "tokenVault",
+            "name": "initializerDepositTokenAccount",
             "type": "publicKey"
           },
           {
-            "name": "nonce",
-            "type": "u8"
-          }
-        ]
-      }
-    }
-  ],
-  "types": [
-    {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
+            "name": "initializerReceiveTokenAccount",
+            "type": "publicKey"
+          },
           {
-            "name": "AmountMustBeGreaterThanZero"
+            "name": "initializerAmount",
+            "type": "u64"
+          },
+          {
+            "name": "takerAmount",
+            "type": "u64"
           }
         ]
       }
     }
   ],
   "metadata": {
-    "address": "6eUddVvNLGkPmJUfRyAMP4Cj4VabxDS9D2Hgb8VhEvrz"
+    "address": "Fz6bcgCzda5qxKnk7QrDaxYNZBokxdjeCL3QMWKeXGfP"
   }
 }
