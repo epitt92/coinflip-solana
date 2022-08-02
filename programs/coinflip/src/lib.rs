@@ -178,10 +178,12 @@ pub struct Initialize<'info> {
     )]
     pub token_vault: Account<'info, TokenAccount>,
 
-    pub system_program: Program<'info, System>,
     pub token_mint: Account<'info, Mint>,
     // Misc.
+    system_program: Program<'info, System>,
     token_program: Program<'info, Token>,
+    rent: Sysvar<'info, Rent>,
+
 }
 
 #[derive(Accounts)]
