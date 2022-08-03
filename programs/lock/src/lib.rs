@@ -78,7 +78,7 @@ pub struct Initialize<'info> {
     payer=owner,
     space=8 + 32 + 32 + 1 + 1 ,
     seeds=[owner.key().as_ref()],
-    bump=_vault_account_bump)
+    bump)
     ]
     pub lock_account: Account<'info, LockAccount>,
     #[account(mut)]
