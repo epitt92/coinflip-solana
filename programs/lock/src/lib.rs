@@ -44,7 +44,7 @@ pub mod lock {
         );
         msg!("Withdrawing {}", lamports);
 
-        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[escrow_account_bump]];
+        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[lock_account.bump]];
 
         invoke_signed(
             transfer_instruction,
