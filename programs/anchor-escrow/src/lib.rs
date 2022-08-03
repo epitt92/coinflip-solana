@@ -74,7 +74,7 @@ pub mod anchor_escrow {
     pub fn calculate(
         ctx: Context<Calc>,
     ) -> Result<()> {
-        let escrow_account = ctx.accounts.escrow_account;
+        let escrow_account = &mut ctx.accounts.escrow_account;
 
         let (vault_authority, _vault_authority_bump) =
             Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
