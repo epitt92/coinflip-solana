@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::system_program};
 
-declare_id!("E41ZWCPjxsHmAv6DhUdfduj8W2bt7VCnq4RiypAL1RYc");
+declare_id!("EVLUk8YzxevK24RRHEos5WxcXTqx8dDu79Xa4gGkQKMU");
 
 #[program]
 pub mod lock {
