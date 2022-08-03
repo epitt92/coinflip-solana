@@ -16,11 +16,6 @@
           "isSigner": false
         },
         {
-          "name": "initializerUserAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "escrowAccount",
           "isMut": true,
           "isSigner": false
@@ -61,10 +56,6 @@
         "fields": [
           {
             "name": "initializerKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "initializerUserAccount",
             "type": "publicKey"
           },
           {
