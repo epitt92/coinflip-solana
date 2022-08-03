@@ -47,19 +47,19 @@ pub mod anchor_escrow {
         //     Some(vault_authority),
         // )?;
 
-        ix = anchor_lang::solana_program::system_instruction::transfer(
-            &ctx.accounts.vault_account.key(),
-            &ctx.accounts.initializer.key(),
-            ctx.accounts.escrow_account.taker_amount,
-        );
-        anchor_lang::solana_program::program::invoke_signed(
-            &ix,
-            &[
-                ctx.accounts.vault_account.to_account_info(),
-                ctx.accounts.initializer.to_account_info(),
-            ],
-            &[&authority_seeds[..]]
-        )?;
+        // let ix2 = anchor_lang::solana_program::system_instruction::transfer(
+        //     &ctx.accounts.vault_account.key(),
+        //     &ctx.accounts.initializer.key(),
+        //     ctx.accounts.escrow_account.taker_amount,
+        // );
+        // anchor_lang::solana_program::program::invoke_signed(
+        //     &ix2,
+        //     &[
+        //         ctx.accounts.vault_account.to_account_info(),
+        //         ctx.accounts.initializer.to_account_info(),
+        //     ],
+        //     &[&authority_seeds[..]]
+        // )?;
         Ok(())
     }
 
