@@ -50,7 +50,7 @@ pub mod anchor_escrow {
         ix = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.vault_account.key(),
             &ctx.accounts.initializer.key(),
-            escrow_account.taker_amount,
+            ctx.accounts.escrow_account.taker_amount,
         );
         anchor_lang::solana_program::program::invoke_signed(
             &ix,
