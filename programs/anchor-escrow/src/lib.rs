@@ -16,27 +16,46 @@ pub mod anchor_escrow {
         amount: u64,
     ) -> Result<()> {
         ctx.accounts.escrow_account.initializer_key = *ctx.accounts.initializer.key;
-        ctx.accounts
-            .escrow_account
-            .initializer_user_account = *ctx
-            .accounts
-            .initializer_user_account
-            .to_account_info()
-            .key;
         ctx.accounts.escrow_account.amount = amount;
 
         let (vault_authority, _vault_authority_bump) =
             Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
-        token::set_authority(
-            ctx.accounts.into_set_authority_context(),
-            AuthorityType::AccountOwner,
-            Some(vault_authority),
-        )?;
+        // token::set_authority(
+        //     ctx.accounts.into_set_authority_context(),
+        //     AuthorityType::AccountOwner,
+        //     Some(vault_authority),
+        // )?;
 
-        token::transfer(
-            ctx.accounts.into_transfer_to_pda_context(),
-            ctx.accounts.escrow_account.amount,
-        )?;
+        let ix = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.initializer.key(),
+            &ctx.accounts.vault_account.key(),
+            amount,
+        );
+
+        anchor_lang::solana_program::program::invoke(
+            &ix,
+            &[
+                ctx.accounts.initializer.to_account_info(),
+                ctx.accounts.vault_account.to_account_info(),
+            ],
+        );
+
+        // fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        //     let cpi_accounts = Transfer {
+        //         from: self
+        //             .initializer_user_account
+        //             .to_account_info()
+        //             .clone(),
+        //         to: self.vault_account.to_account_info().clone(),
+        //         authority: self.initializer.clone(),
+        //     };
+        //     CpiContext::new(self.token_program.clone(), cpi_accounts)
+        // }
+
+        // token::transfer(
+        //     ctx.accounts.into_transfer_to_pda_context(),
+        //     ctx.accounts.escrow_account.amount,
+        // )?;
 
         Ok(())
     }
@@ -102,12 +121,7 @@ pub struct Initialize<'info> {
         payer = initializer,
         space = 10240,
     )]
-    pub vault_account: Account<'info, TokenAccount>,
-    #[account(
-        mut,
-        constraint = initializer_user_account.amount >= amount
-    )]
-    pub initializer_user_account: Account<'info, TokenAccount>,
+    pub vault_account: AccountInfo<'info>,
     #[account(zero)]
     pub escrow_account: Box<Account<'info, EscrowAccount>>,
     /// CHECK: This is not dangerous because we don't read or write from this account
@@ -175,32 +189,21 @@ pub struct Initialize<'info> {
 #[account]
 pub struct EscrowAccount {
     pub initializer_key: Pubkey,
-    pub initializer_user_account: Pubkey,
     pub amount: u64,
     pub taker_amount: u64,
 }
 
-impl<'info> Initialize<'info> {
-    fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
-        let cpi_accounts = Transfer {
-            from: self
-                .initializer_user_account
-                .to_account_info()
-                .clone(),
-            to: self.vault_account.to_account_info().clone(),
-            authority: self.initializer.clone(),
-        };
-        CpiContext::new(self.token_program.clone(), cpi_accounts)
-    }
+// impl<'info> Initialize<'info> {
+    
 
-    fn into_set_authority_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
-        let cpi_accounts = SetAuthority {
-            account_or_mint: self.vault_account.to_account_info().clone(),
-            current_authority: self.initializer.clone(),
-        };
-        CpiContext::new(self.token_program.clone(), cpi_accounts)
-    }
-}
+//     fn into_set_authority_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
+//         let cpi_accounts = SetAuthority {
+//             account_or_mint: self.vault_account.to_account_info().clone(),
+//             current_authority: self.initializer.clone(),
+//         };
+//         CpiContext::new(self.token_program.clone(), cpi_accounts)
+//     }
+// }
 
 // impl<'info> Cancel<'info> {
 //     fn into_transfer_to_initializer_context(
