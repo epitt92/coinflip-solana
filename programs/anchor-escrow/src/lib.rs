@@ -124,7 +124,7 @@ pub struct Calc<'info> {
     pub initializer: AccountInfo<'info>,
     #[account(
         init,
-        seeds = [b"token-seed".as_ref()],
+        seeds = [b"escrowtest".as_ref()],
         bump,
         payer = initializer,
         space = 10240,
