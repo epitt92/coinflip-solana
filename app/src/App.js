@@ -114,23 +114,24 @@ function App() {
       console.log('airdrop success')
     
       const [lock_account, bump] = await anchor.web3.PublicKey.findProgramAddress(
-        [provider.wallet.publicKey.toBuffer()],
+        [],
         program.programId
         )		//const utf8encoded = Buffer.from(bio);
       // Execute the RPC call
       console.log(lock_account)
-      // const tx = await program.rpc.initialize(		
-      //   bump,	
-      //   provider.wallet.publicKey,
-      //   //new BN(anchor.web3.LAMPORTS_PER_SOL),
-      //   {
-      //   accounts: {
-      //     lockAccount: lock_account, // publickey for our new account
-      //     owner: provider.wallet.publicKey, // publickey of our anchor wallet provider
-      //     systemProgram: SystemProgram.programId // just for Anchor reference
-      //   },
-      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
-      // });
+      const txi = await program.rpc.initialize(		
+        bump,	
+        provider.wallet.publicKey,
+        //new BN(anchor.web3.LAMPORTS_PER_SOL),
+        {
+        accounts: {
+          lockAccount: provider.wallet.publicKey, // publickey for our new account
+          owner: provider.wallet.publicKey, // publickey of our anchor wallet provider
+          escrowAccount: lock_account,
+          systemProgram: SystemProgram.programId // just for Anchor reference
+        },
+        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      });
   
       console.log(
         `Successfully intialized lock ID: ${lock_account} for user ${provider.wallet.publicKey}`
