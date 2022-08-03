@@ -13,7 +13,7 @@ declare_id!("8uay33TErnMNRYFrsQTGsXqK1jzSZq9hDXGvEZAACPmd");
 pub mod anchor_escrow {
     use super::*;
 
-    const ESCROW_PDA_SEED: &[u8] = b"escrow";
+    const ESCROW_PDA_SEED: &[u8] = b"escrowtest";
 
     pub fn initialize(
         ctx: Context<Initialize>,

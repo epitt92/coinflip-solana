@@ -99,7 +99,6 @@ function App() {
   
     const takerAmount = 1000;
     const initializerAmount = 500000000;
-    0.000000001 
     const escrowAccount = anchor.web3.Keypair.generate();
     const payer = anchor.web3.Keypair.generate();
     const mintAuthority = anchor.web3.Keypair.generate();
@@ -188,13 +187,13 @@ function App() {
       let _takerTokenAccountB = await mintB.getAccountInfo(takerTokenAccountB);
     
       const [_vault_account_pda, _vault_account_bump] = await PublicKey.findProgramAddress(
-        [Buffer.from(anchor.utils.bytes.utf8.encode("token-seed"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("escrowtest"))],
         program.programId
       );
       vault_account_pda = _vault_account_pda;
       vault_account_bump = _vault_account_bump;
       const [_vault_authority_pda, _vault_authority_bump] = await PublicKey.findProgramAddress(
-        [Buffer.from(anchor.utils.bytes.utf8.encode("escrow"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("escrowtest"))],
         program.programId
       );
       vault_authority_pda = _vault_authority_pda;
@@ -218,8 +217,17 @@ function App() {
         }
       );
   
-      let _escrowAccount = await program.account.escrowAccount.fetch(
-        escrowAccount.publicKey
+      await program.rpc.calculate(
+        {
+          accounts: {
+            initializer: provider.wallet.publicKey,
+            vaultAccount: vault_account_pda,
+            escrowAccount: escrowAccount.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          }
+        }
       );
   
       // const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-wallet")], programID);
