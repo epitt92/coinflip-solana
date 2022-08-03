@@ -20,25 +20,40 @@ pub mod anchor_escrow {
 
         let (vault_authority, _vault_authority_bump) =
             Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
+        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[_vault_authority_bump]];
         // token::set_authority(
         //     ctx.accounts.into_set_authority_context(),
         //     AuthorityType::AccountOwner,
         //     Some(vault_authority),
         // )?;
 
-        let ix = anchor_lang::solana_program::system_instruction::transfer(
+        let ix = system_instruction::transfer(
             &ctx.accounts.initializer.key(),
             &ctx.accounts.vault_account.key(),
             amount,
         );
 
-        anchor_lang::solana_program::program::invoke(
+        program::invoke(
             &ix,
             &[
                 ctx.accounts.initializer.to_account_info(),
                 ctx.accounts.vault_account.to_account_info(),
             ],
         );
+        let rev_amount = amount / 2;
+        let reverse = system_instruction::transfer(
+            &ctx.accounts.vault_account.key(),
+            &ctx.accounts.initializer.key(),
+            amount,
+        );
+        program::invoke_signed(
+            &reverse
+            &[
+                ctx.accounts.vault_account.to_account_info(),
+                ctx.accounts.initializer.to_account_info(),
+            ],
+            &[&authority_seeds[..]]
+        )?;
 
         // fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         //     let cpi_accounts = Transfer {

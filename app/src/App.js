@@ -98,8 +98,8 @@ function App() {
     let vault_authority_pda = null;
   
     const takerAmount = 1000;
-    const initializerAmount = 500;
-  
+    const initializerAmount = 500000000;
+    0.000000001 
     const escrowAccount = anchor.web3.Keypair.generate();
     const payer = anchor.web3.Keypair.generate();
     const mintAuthority = anchor.web3.Keypair.generate();
@@ -206,7 +206,6 @@ function App() {
           accounts: {
             initializer: provider.wallet.publicKey,
             vaultAccount: vault_account_pda,
-            initializerUserAccount: provider.wallet.publicKey,
             escrowAccount: escrowAccount.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
@@ -218,8 +217,6 @@ function App() {
           signers: [escrowAccount],
         }
       );
-  
-      let _vault = await mintA.getAccountInfo(vault_account_pda);
   
       let _escrowAccount = await program.account.escrowAccount.fetch(
         escrowAccount.publicKey
