@@ -131,7 +131,6 @@ function App() {
         {
         accounts: {
           lockAccount: lock_account, // publickey for our new account
-          owner: provider.wallet.publicKey, // publickey of our anchor wallet provider
           escrowAccount: escrow_account,
           systemProgram: SystemProgram.programId // just for Anchor reference
         },
@@ -147,7 +146,6 @@ function App() {
         accounts: {
           lockAccount: lock_account, // publickey for our new account
           escrowAccount: escrow_account,
-          owner: provider.wallet.publicKey, 
           systemProgram: SystemProgram.programId // just for Anchor reference
         },
         signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
@@ -173,10 +171,9 @@ function App() {
         new anchor.BN(initializerAmount/2),
         {
         accounts: {
-          lockAccount: lock_account, // publickey for our new account
-          owner: provider.wallet.publicKey, 
+          lockAccount: provider.wallet.publicKey, // publickey for our new account
           escrowAccount: escrow_account,
-          lockProgram: lock_account ,// just for Anchor reference,
+          lockProgram: provider.wallet.publicKey ,// just for Anchor reference,
           systemProgram: SystemProgram.programId // just for Anchor reference
         },
         signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too

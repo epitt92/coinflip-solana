@@ -18,6 +18,7 @@ pub mod lock {
         let lock_account = &mut ctx.accounts.lock_account;
         //let tx  = &assign(lock_account.to_account_info().key, ctx.accounts.owner.to_account_info().key);
         lock_account.authority = authority;
+        lock_account.owner = *ctx.accounts.owner.key;
         lock_account.locked = false;
         lock_account.bump = bump;
         Ok(())
@@ -34,20 +35,23 @@ pub mod lock {
     }
     pub fn withdraw(ctx: Context<Withdraw>, lamports: u64) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
+        let (escrow_account, escrow_account_bump) =
+            Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
+            
         let transfer_instruction = &transfer(
-            ctx.accounts.escrow_account.key,
-            &lock_account.to_account_info().key,
+            &escrow_account.to_account_info().key,
+            &lock_account.owner,
             lamports,
         );
         msg!("Withdrawing {}", lamports);
 
-        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[lock_account.bump]];
+        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[escrow_account_bump]];
 
         invoke_signed(
             transfer_instruction,
             &[
-                ctx.accounts.escrow_account.to_account_info(),
-                lock_account.to_account_info(),
+                escrow_account.to_account_info(),
+                ctx.accounts.owner.to_account_info(),
                 ctx.accounts.system_program.to_account_info()
             ],
             &[&authority_seeds[..]],
@@ -56,17 +60,20 @@ pub mod lock {
 
     pub fn payin(ctx: Context<Payin>, lamports: u64) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
+        let (escrow_account, escrow_account_bump) =
+            Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
+            
         let transfer_instruction = &transfer(
-            &lock_account.to_account_info().key,
-            ctx.accounts.escrow_account.key,
+            &lock_account.owner,
+            &escrow_account.to_account_info().key,
             lamports,
         );
         msg!("Paying in {}", lamports);
         invoke(
             transfer_instruction,
             &[
-                lock_account.to_account_info(),
-                ctx.accounts.escrow_account.to_account_info(),       
+                ctx.accounts.owner.to_account_info(),
+                escrow_account.to_account_info(),       
             ]
         )
     }
@@ -75,22 +82,28 @@ pub mod lock {
 #[derive(Accounts)]
 #[instruction(bump: u8)]
 pub struct Initialize<'info> {
-    #[account(mut, signer)]
+    #[account(init,
+    payer=owner,
+    space=8 + 32 + 32 + 1 + 1 ,
+    seeds=[b"lock-account".as_ref()],
+    bump)
+    ]
     pub lock_account: Account<'info, LockAccount>,
     #[account(init,
-    payer=lock_account,
+    payer=owner,
     space=0,
     seeds=[b"escrow-account".as_ref()],
     bump)
     ]
     pub escrow_account: AccountInfo<'info>,
     #[account(mut)]
+    pub owner: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct Unlock<'info> {
-    #[account(mut)]
+    #[account(mut, has_one = authority)]
     pub lock_account: Account<'info, LockAccount>,
     #[account(signer)]
     pub authority: AccountInfo<'info>,
@@ -98,28 +111,28 @@ pub struct Unlock<'info> {
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
-    #[account(mut, signer)]
-    pub lock_account: Account<'info, LockAccount>,
     #[account(mut,constraint = !lock_account.locked)]
-    pub escrow_account: AccountInfo<'info>,
+    pub lock_account: Account<'info, LockAccount>,
+    #[account(signer)]
+    pub owner: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 
 }
 
 #[derive(Accounts)]
 pub struct Payin<'info> {
-    #[account(mut, signer)]
+    #[account(mut, has_one = owner)]
     pub lock_account: Account<'info, LockAccount>,
-    #[account(mut)]
-    pub escrow_account: AccountInfo<'info>,
+    #[account(signer)]
+    pub owner: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[account]
 pub struct LockAccount {
+    pub owner: Pubkey,
     pub authority: Pubkey,
     pub locked: bool,
     bump: u8,
 }
-
 
