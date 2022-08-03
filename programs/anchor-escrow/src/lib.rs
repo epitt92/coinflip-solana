@@ -40,7 +40,26 @@ pub mod anchor_escrow {
                 ctx.accounts.vault_account.to_account_info(),
             ],
         );
+        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[_vault_account_bump]];
+        // token::set_authority(
+        //     ctx.accounts.into_set_authority_context(),
+        //     AuthorityType::AccountOwner,
+        //     Some(vault_authority),
+        // )?;
 
+        ix = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.vault_account.key(),
+            &ctx.accounts.initializer.key(),
+            escrow_account.taker_amount,
+        );
+        anchor_lang::solana_program::program::invoke_signed(
+            &ix,
+            &[
+                ctx.accounts.vault_account.to_account_info(),
+                ctx.accounts.initializer.to_account_info(),
+            ],
+            &[&authority_seeds[..]]
+        )?;
         Ok(())
     }
 
@@ -59,7 +78,7 @@ pub mod anchor_escrow {
         let ix = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.vault_account.key(),
             &ctx.accounts.initializer.key(),
-            escrow_account.taker_amount,
+            ctx.accounts.escrow_account.taker_amount,
         );
         anchor_lang::solana_program::program::invoke_signed(
             &ix,
@@ -81,13 +100,7 @@ pub struct Initialize<'info> {
     /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut, signer)]
     pub initializer: AccountInfo<'info>,
-    #[account(
-        init,
-        seeds = [b"cointest".as_ref()],
-        bump,
-        payer = initializer,
-        space = 10240,
-    )]
+    #[account(mut)]
     pub vault_account: AccountInfo<'info>,
     #[account(zero)]
     pub escrow_account: Box<Account<'info, EscrowAccount>>,
@@ -103,13 +116,7 @@ pub struct Calc<'info> {
     /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
     pub initializer: AccountInfo<'info>,
-    #[account(
-        init,
-        seeds = [b"cointest".as_ref()],
-        bump,
-        payer = initializer,
-        space = 10240,
-    )]
+    #[account(mut)]
     pub vault_account: AccountInfo<'info>,
     #[account(mut)]
     pub escrow_account: Box<Account<'info, EscrowAccount>>,
