@@ -11,13 +11,13 @@ pub mod lock {
     };
 
     use super::*;
-    pub fn initialize(ctx: Context<Initialize>, bump: u8, authority: Pubkey) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>, _vault_account_bump: u8, authority: Pubkey) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
         //let tx  = &assign(lock_account.to_account_info().key, ctx.accounts.owner.to_account_info().key);
         lock_account.authority = authority;
         lock_account.owner = *ctx.accounts.owner.key;
         lock_account.locked = true;
-        lock_account.bump = bump;
+        lock_account.bump = _vault_account_bump;
         Ok(())
     }
     pub fn unlock(ctx: Context<Unlock>) -> ProgramResult {
@@ -72,13 +72,13 @@ pub mod lock {
 }
 
 #[derive(Accounts)]
-#[instruction(bump: u8)]
+#[instruction(_vault_account_bump: u8)]
 pub struct Initialize<'info> {
     #[account(init,
     payer=owner,
     space=8 + 32 + 32 + 1 + 1 ,
     seeds=[owner.key().as_ref()],
-    bump=bump)
+    bump=_vault_account_bump)
     ]
     pub lock_account: Account<'info, LockAccount>,
     #[account(mut)]
