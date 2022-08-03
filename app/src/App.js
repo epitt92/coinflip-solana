@@ -138,23 +138,23 @@ function App() {
       //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
       // });
   
-      console.log(
-        `Successfully intialized lock ID: ${lock_account} for user ${provider.wallet.publicKey}`
-      );
-      const tx2 = await program.rpc.payin(	
-        new anchor.BN(initializerAmount),
-        {
-        accounts: {
-          lockAccount: lock_account, // publickey for our new account
-          owner: provider.wallet.publicKey,
-          escrowAccount: escrow_account,
-          systemProgram: SystemProgram.programId // just for Anchor reference
-        },
-        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
-      });
-      console.log(
-        `Successfully payed in lock ID: ${lock_account}`
-      );
+      // console.log(
+      //   `Successfully intialized lock ID: ${lock_account} for user ${provider.wallet.publicKey}`
+      // );
+      // const tx2 = await program.rpc.payin(	
+      //   new anchor.BN(initializerAmount),
+      //   {
+      //   accounts: {
+      //     lockAccount: lock_account, // publickey for our new account
+      //     owner: provider.wallet.publicKey,
+      //     escrowAccount: escrow_account,
+      //     systemProgram: SystemProgram.programId // just for Anchor reference
+      //   },
+      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      // });
+      // console.log(
+      //   `Successfully payed in lock ID: ${lock_account}`
+      // );
 
       // const tx1 = await program.rpc.unlock(		
       //   {
@@ -175,7 +175,7 @@ function App() {
         accounts: {
           lockAccount: lock_account, // publickey for our new account
           owner: provider.wallet.publicKey,
-          lockProgram: escrow_account ,// just for Anchor reference,
+          lockProgram: lock_account ,// just for Anchor reference,
           escrowAccount: escrow_account,
           systemProgram: SystemProgram.programId // just for Anchor reference
         },

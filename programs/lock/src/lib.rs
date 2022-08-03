@@ -54,7 +54,7 @@ pub mod lock {
                 ctx.accounts.system_program.to_account_info()
             ],
             &[&[
-                &ESCROW_PDA_SEED.as_ref(), 
+                b"escrow-account".as_ref(), 
                 &[lock_account.bump]
                 ]
             ],
