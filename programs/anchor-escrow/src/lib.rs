@@ -21,7 +21,11 @@ pub mod anchor_escrow {
         amount: u64,
     ) -> Result<()> {
         ctx.accounts.escrow_account.initializer_key = *ctx.accounts.initializer.key;
+        ctx.accounts.escrow_account.vault_account = *ctx.accounts.vault_account.key;
+        
         ctx.accounts.escrow_account.amount = amount;
+        ctx.accounts.escrow_account.bump = _vault_account_bump;
+        ctx.accounts.escrow_account.taker_amount = amount/2;
 
         let (vault_authority, _vault_authority_bump) =
             Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
@@ -45,14 +49,49 @@ pub mod anchor_escrow {
                 ctx.accounts.vault_account.to_account_info(),
             ],
         );
-        let rev_amount = amount / 2;
-        let reverse = anchor_lang::solana_program::system_instruction::transfer(
+        
+
+        // fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        //     let cpi_accounts = Transfer {
+        //         from: self
+        //             .initializer_user_account
+        //             .to_account_info()
+        //             .clone(),
+        //         to: self.vault_account.to_account_info().clone(),
+        //         authority: self.initializer.clone(),
+        //     };
+        //     CpiContext::new(self.token_program.clone(), cpi_accounts)
+        // }
+
+        // token::transfer(
+        //     ctx.accounts.into_transfer_to_pda_context(),
+        //     ctx.accounts.escrow_account.amount,
+        // )?;
+
+        Ok(())
+    }
+
+    pub fn calculate(
+        ctx: Context<Calc>,
+    ) -> Result<()> {
+        let escrow_account = ctx.accounts.escrow_account;
+
+        let (vault_authority, _vault_authority_bump) =
+            Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
+        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[_vault_authority_bump]];
+        // token::set_authority(
+        //     ctx.accounts.into_set_authority_context(),
+        //     AuthorityType::AccountOwner,
+        //     Some(vault_authority),
+        // )?;
+
+        let ix = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.vault_account.key(),
             &ctx.accounts.initializer.key(),
-            amount,
+            escrow_account.taker_amount,
         );
         anchor_lang::solana_program::program::invoke_signed(
-            &reverse,
+            &ix,
             &[
                 ctx.accounts.vault_account.to_account_info(),
                 ctx.accounts.initializer.to_account_info(),
@@ -151,6 +190,27 @@ pub struct Initialize<'info> {
     pub token_program: AccountInfo<'info>,
 }
 
+#[derive(Accounts)]
+pub struct Calc<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut)]
+    pub initializer: AccountInfo<'info>,
+    #[account(
+        init,
+        seeds = [b"token-seed".as_ref()],
+        bump,
+        payer = initializer,
+        space = 10240,
+    )]
+    pub vault_account: AccountInfo<'info>,
+    #[account(zero)]
+    pub escrow_account: Box<Account<'info, EscrowAccount>>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub system_program: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub token_program: AccountInfo<'info>,
+}
 // #[derive(Accounts)]
 // pub struct Cancel<'info> {
 //     /// CHECK: This is not dangerous because we don't read or write from this account
@@ -209,7 +269,9 @@ pub struct Initialize<'info> {
 #[account]
 pub struct EscrowAccount {
     pub initializer_key: Pubkey,
+    pub vault_account: Pubkey,
     pub amount: u64,
+    pub bump: u8,
     pub taker_amount: u64,
 }
 
