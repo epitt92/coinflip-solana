@@ -44,7 +44,7 @@ pub mod lock {
         );
         msg!("Withdrawing {}", lamports);
 
-        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[lock_account.bump]];
+        // let authority_seeds = &[];
 
         invoke_signed(
             transfer_instruction,
@@ -53,7 +53,11 @@ pub mod lock {
                 ctx.accounts.owner.to_account_info(),
                 ctx.accounts.system_program.to_account_info()
             ],
-            &[&authority_seeds[..]],
+            &[&[
+                &ESCROW_PDA_SEED.as_ref(), 
+                &[lock_account.bump]
+                ]
+            ],
         )
     }
 
@@ -120,7 +124,7 @@ pub struct Withdraw<'info> {
 
 #[derive(Accounts)]
 pub struct Payin<'info> {
-    #[account(mut, has_one = owner)]
+    #[account(mut)]
     pub lock_account: Account<'info, LockAccount>,
     #[account(mut)]
     pub escrow_account: AccountInfo<'info>,

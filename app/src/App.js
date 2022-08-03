@@ -123,19 +123,20 @@ function App() {
       );
       //const utf8encoded = Buffer.from(bio);
       // Execute the RPC call
-      console.log(lock_account.toBase58())
-      const txi = await program.rpc.initialize(		
-        bump,	
-        provider.wallet.publicKey,
-        //new BN(anchor.web3.LAMPORTS_PER_SOL),
-        {
-        accounts: {
-          lockAccount: lock_account, // publickey for our new account
-          escrowAccount: escrow_account,
-          systemProgram: SystemProgram.programId // just for Anchor reference
-        },
-        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
-      });
+      console.log(lock_account.toBase58(), escrow_account.toBase58())
+      // const txi = await program.rpc.initialize(		
+      //   bump,	
+      //   provider.wallet.publicKey,
+      //   //new BN(anchor.web3.LAMPORTS_PER_SOL),
+      //   {
+      //   accounts: {
+      //     lockAccount: lock_account, // publickey for our new account
+      //     owner: provider.wallet.publicKey,
+      //     escrowAccount: escrow_account,
+      //     systemProgram: SystemProgram.programId // just for Anchor reference
+      //   },
+      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      // });
   
       console.log(
         `Successfully intialized lock ID: ${lock_account} for user ${provider.wallet.publicKey}`
@@ -145,6 +146,7 @@ function App() {
         {
         accounts: {
           lockAccount: lock_account, // publickey for our new account
+          owner: provider.wallet.publicKey,
           escrowAccount: escrow_account,
           systemProgram: SystemProgram.programId // just for Anchor reference
         },
@@ -171,9 +173,10 @@ function App() {
         new anchor.BN(initializerAmount/2),
         {
         accounts: {
-          lockAccount: provider.wallet.publicKey, // publickey for our new account
+          lockAccount: lock_account, // publickey for our new account
+          owner: provider.wallet.publicKey,
+          lockProgram: escrow_account ,// just for Anchor reference,
           escrowAccount: escrow_account,
-          lockProgram: provider.wallet.publicKey ,// just for Anchor reference,
           systemProgram: SystemProgram.programId // just for Anchor reference
         },
         signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too

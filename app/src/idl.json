@@ -8,7 +8,7 @@
         {
           "name": "lockAccount",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "escrowAccount",
@@ -16,8 +16,13 @@
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "owner",
           "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
           "isSigner": false
         }
       ],
@@ -70,12 +75,17 @@
         {
           "name": "lockAccount",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "escrowAccount",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "systemProgram",
@@ -96,12 +106,17 @@
         {
           "name": "lockAccount",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "escrowAccount",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "systemProgram",
@@ -123,6 +138,10 @@
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
           {
             "name": "authority",
             "type": "publicKey"
