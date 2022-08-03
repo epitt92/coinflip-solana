@@ -5,8 +5,8 @@ lock = "E41ZWCPjxsHmAv6DhUdfduj8W2bt7VCnq4RiypAL1RYc"
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "devnet"
-wallet = "config/solana/id.json"
+cluster = "localnet"
+wallet = "/Users/christopherehmann/.config/solana/id.json"
 
 [scripts]
 test = "ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
