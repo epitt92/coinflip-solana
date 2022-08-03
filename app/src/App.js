@@ -113,21 +113,26 @@ function App() {
     try {
       console.log('airdrop success')
     
-      const [lock_account, bump] = await anchor.web3.PublicKey.findProgramAddress(
-        [],
+      const [lock_account, _escrow_account_bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("lock-account"))],
         program.programId
-        )		//const utf8encoded = Buffer.from(bio);
+      );
+      const [escrow_account, bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("escrow-account"))],
+        program.programId
+      );
+      //const utf8encoded = Buffer.from(bio);
       // Execute the RPC call
-      console.log(lock_account)
+      console.log(lock_account.toBase58())
       const txi = await program.rpc.initialize(		
         bump,	
         provider.wallet.publicKey,
         //new BN(anchor.web3.LAMPORTS_PER_SOL),
         {
         accounts: {
-          lockAccount: provider.wallet.publicKey, // publickey for our new account
+          lockAccount: lock_account, // publickey for our new account
           owner: provider.wallet.publicKey, // publickey of our anchor wallet provider
-          escrowAccount: lock_account,
+          escrowAccount: escrow_account,
           systemProgram: SystemProgram.programId // just for Anchor reference
         },
         signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
@@ -136,32 +141,33 @@ function App() {
       console.log(
         `Successfully intialized lock ID: ${lock_account} for user ${provider.wallet.publicKey}`
       );
-      // const tx1 = await program.rpc.payin(	
-      //   new anchor.BN(initializerAmount),
-      //   {
-      //   accounts: {
-      //     lockAccount: lock_account, // publickey for our new account
-      //     owner: provider.wallet.publicKey, 
-      //     systemProgram: SystemProgram.programId // just for Anchor reference
-      //   },
-      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
-      // });
-      // console.log(
-      //   `Successfully payed in lock ID: ${lock_account}`
-      // );
-
-      const tx1 = await program.rpc.unlock(		
+      const tx2 = await program.rpc.payin(	
+        new anchor.BN(initializerAmount),
         {
         accounts: {
           lockAccount: lock_account, // publickey for our new account
-          authority: provider.wallet.publicKey, // publickey of our anchor wallet provider
+          escrowAccount: escrow_account,
+          owner: provider.wallet.publicKey, 
           systemProgram: SystemProgram.programId // just for Anchor reference
         },
         signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
       });
       console.log(
-        `Successfully locked lock ID: ${lock_account} with authority ${provider.wallet.publicKey}`
+        `Successfully payed in lock ID: ${lock_account}`
       );
+
+      // const tx1 = await program.rpc.unlock(		
+      //   {
+      //   accounts: {
+      //     lockAccount: lock_account, // publickey for our new account
+      //     authority: provider.wallet.publicKey, // publickey of our anchor wallet provider
+      //     systemProgram: SystemProgram.programId // just for Anchor reference
+      //   },
+      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      // });
+      // console.log(
+      //   `Successfully locked lock ID: ${lock_account} with authority ${provider.wallet.publicKey}`
+      // );
 
       const tx = await program.rpc.withdraw(		
         new anchor.BN(initializerAmount/2),
@@ -169,6 +175,7 @@ function App() {
         accounts: {
           lockAccount: lock_account, // publickey for our new account
           owner: provider.wallet.publicKey, 
+          escrowAccount: escrow_account,
           lockProgram: lock_account ,// just for Anchor reference,
           systemProgram: SystemProgram.programId // just for Anchor reference
         },
@@ -192,7 +199,7 @@ function App() {
       //     accounts: {
       //       initializer: provider.wallet.publicKey,
       //       vaultAccount: vault_account_pda,
-      //       escrowAccount: escrowAccount.publicKey,
+      //       escrowAccount: lock_account,
       //       systemProgram: anchor.web3.SystemProgram.programId,
       //       rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       //       tokenProgram: TOKEN_PROGRAM_ID,

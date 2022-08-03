@@ -11,6 +11,11 @@
           "isSigner": false
         },
         {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "owner",
           "isMut": true,
           "isSigner": true
@@ -78,6 +83,11 @@
           "isSigner": true
         },
         {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -102,6 +112,11 @@
           "name": "owner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -144,6 +159,6 @@
     }
   ],
   "metadata": {
-    "address": "8jRM2EoYz5DkmMi42RnCQmxLPPPKvqVXMPUEgQpPs3YS"
+    "address": "EVLUk8YzxevK24RRHEos5WxcXTqx8dDu79Xa4gGkQKMU"
   }
 }
