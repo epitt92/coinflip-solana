@@ -44,7 +44,7 @@ pub mod lock {
         );
         msg!("Withdrawing {}", lamports);
 
-        // let authority_seeds = &[];
+        let authority_seeds = &[b"escrow-account".as_ref(), &[lock_account.bump]];
 
         invoke_signed(
             transfer_instruction,
@@ -53,11 +53,7 @@ pub mod lock {
                 ctx.accounts.owner.to_account_info(),
                 ctx.accounts.system_program.to_account_info()
             ],
-            &[&[
-                b"escrow-account".as_ref(), 
-                &[lock_account.bump]
-                ]
-            ],
+            &[&authority_seeds[..]],
         )
     }
 

@@ -123,7 +123,8 @@ function App() {
       );
       //const utf8encoded = Buffer.from(bio);
       // Execute the RPC call
-      console.log(lock_account.toBase58(), escrow_account.toBase58())
+      console.log(lock_account.toBase58(), escrow_account.toBase58(), bump)
+      
       // const txi = await program.rpc.initialize(		
       //   bump,	
       //   provider.wallet.publicKey,
