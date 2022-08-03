@@ -13,7 +13,7 @@ declare_id!("8uay33TErnMNRYFrsQTGsXqK1jzSZq9hDXGvEZAACPmd");
 pub mod anchor_escrow {
     use super::*;
 
-    const ESCROW_PDA_SEED: &[u8] = b"escrowtest";
+    const ESCROW_PDA_SEED: &[u8] = b"coinflip";
 
     pub fn initialize(
         ctx: Context<Initialize>,
@@ -102,7 +102,7 @@ pub struct Initialize<'info> {
     pub initializer: AccountInfo<'info>,
     #[account(
         init,
-        seeds = [b"escrowtest".as_ref()],
+        seeds = [b"coinflip".as_ref()],
         bump,
         payer = initializer,
         space = 10240,
@@ -124,7 +124,7 @@ pub struct Calc<'info> {
     pub initializer: AccountInfo<'info>,
     #[account(
         init,
-        seeds = [b"escrowtest".as_ref()],
+        seeds = [b"coinflip".as_ref()],
         bump,
         payer = initializer,
         space = 10240,
