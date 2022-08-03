@@ -7,7 +7,7 @@ import {
 import * as anchor from '@project-serum/anchor';
 import idl from './idl.json';
 
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, BN } from "@solana/spl-token";
 
 import * as spl from '@solana/spl-token';
 
@@ -30,7 +30,7 @@ const opts = {
 }
 const programID = new PublicKey(idl.metadata.address);
 
-const network = clusterApiUrl('devnet');
+const network = clusterApiUrl('testnet');
 
 function App() {
   const [value, setValue] = useState(null);
@@ -85,7 +85,7 @@ function App() {
     /* create the program interface combining the idl, program ID, and provider */
     const program = new Program(idl, programID, provider);
 
-    let mintAddress = await createMint(provider.connection);
+    // let mintAddress = await createMint(provider.connection);
 
     let mintA = null;
     let mintB = null;
@@ -98,7 +98,7 @@ function App() {
     let vault_authority_pda = null;
   
     const takerAmount = 1000;
-    const initializerAmount = 500000000;
+    const initializerAmount = 10000000;
     const escrowAccount = anchor.web3.Keypair.generate();
     const payer = anchor.web3.Keypair.generate();
     const mintAuthority = anchor.web3.Keypair.generate();
@@ -111,111 +111,97 @@ function App() {
     console.log(takerMainAccount.publicKey.toBase58())
 
     try {
-      await provider.connection.confirmTransaction(
-        await provider.connection.requestAirdrop(payer.publicKey, 1000000000),
-        "processed"
-      );
-
-      alert('airdrop success')
       console.log('airdrop success')
-
-      // Fund Main Accounts
-      await provider.send(
-        (() => {
-          const tx = new Transaction();
-          tx.add(
-            SystemProgram.transfer({
-              fromPubkey: payer.publicKey,
-              toPubkey: initializerMainAccount.publicKey,
-              lamports: 100000000,
-            }),
-            SystemProgram.transfer({
-              fromPubkey: payer.publicKey,
-              toPubkey: takerMainAccount.publicKey,
-              lamports: 100000000,
-            })
-          );
-          return tx;
-        })(),
-        [payer]
-      );
-      console.log("transfer success")
-      mintA = await spl.Token.createMint(
-        provider.connection,
-        payer,
-        mintAuthority.publicKey,
-        null,
-        0,
-        TOKEN_PROGRAM_ID
-      );
-  
-      mintB = await spl.Token.createMint(
-        provider.connection,
-        payer,
-        mintAuthority.publicKey,
-        null,
-        0,
-        TOKEN_PROGRAM_ID
-      );
-      
-      console.log(mintA, mintB)
-      initializerTokenAccountA = await mintA.createAccount(initializerMainAccount.publicKey);
-      takerTokenAccountA = await mintA.createAccount(takerMainAccount.publicKey);
-   
-      console.log("A token Acc: ", initializerTokenAccountA.toBase58(), takerTokenAccountA.toBase58())
-  
-      initializerTokenAccountB = await mintB.createAccount(initializerMainAccount.publicKey);
-      takerTokenAccountB = await mintB.createAccount(takerMainAccount.publicKey);
-
-      console.log("B token Acc: ", initializerTokenAccountB.toBase58(), takerTokenAccountB.toBase58())
-  
-      await mintA.mintTo(
-        initializerTokenAccountA,
-        mintAuthority.publicKey,
-        [mintAuthority],
-        initializerAmount
-      );
-  
-      await mintB.mintTo(
-        takerTokenAccountB,
-        mintAuthority.publicKey,
-        [mintAuthority],
-        takerAmount
-      );
-
-      let _initializerTokenAccountA = await mintA.getAccountInfo(initializerTokenAccountA);
-      let _takerTokenAccountB = await mintB.getAccountInfo(takerTokenAccountB);
     
-      const [_vault_account_pda, _vault_account_bump] = await PublicKey.findProgramAddress(
-        [Buffer.from(anchor.utils.bytes.utf8.encode("escrowtest"))],
+      const [lock_account, bump] = await anchor.web3.PublicKey.findProgramAddress(
+        [provider.wallet.publicKey.toBuffer()],
         program.programId
-      );
-      vault_account_pda = _vault_account_pda;
-      vault_account_bump = _vault_account_bump;
-      const [_vault_authority_pda, _vault_authority_bump] = await PublicKey.findProgramAddress(
-        [Buffer.from(anchor.utils.bytes.utf8.encode("escrowtest"))],
-        program.programId
-      );
-      vault_authority_pda = _vault_authority_pda;
+        )		//const utf8encoded = Buffer.from(bio);
+      // Execute the RPC call
+      console.log(lock_account)
+      // const tx = await program.rpc.initialize(		
+      //   bump,	
+      //   provider.wallet.publicKey,
+      //   //new BN(anchor.web3.LAMPORTS_PER_SOL),
+      //   {
+      //   accounts: {
+      //     lockAccount: lock_account, // publickey for our new account
+      //     owner: provider.wallet.publicKey, // publickey of our anchor wallet provider
+      //     systemProgram: SystemProgram.programId // just for Anchor reference
+      //   },
+      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      // });
   
-      await program.rpc.initialize(
-        vault_account_bump,
-        new anchor.BN(initializerAmount),
-        {
-          accounts: {
-            initializer: provider.wallet.publicKey,
-            vaultAccount: vault_account_pda,
-            escrowAccount: escrowAccount.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-            tokenProgram: TOKEN_PROGRAM_ID,
-          },
-          instructions: [
-            await program.account.escrowAccount.createInstruction(escrowAccount),
-          ],
-          signers: [escrowAccount],
-        }
+      console.log(
+        `Successfully intialized lock ID: ${lock_account} for user ${provider.wallet.publicKey}`
       );
+      // const tx1 = await program.rpc.payin(	
+      //   new anchor.BN(initializerAmount),
+      //   {
+      //   accounts: {
+      //     lockAccount: lock_account, // publickey for our new account
+      //     owner: provider.wallet.publicKey, 
+      //     systemProgram: SystemProgram.programId // just for Anchor reference
+      //   },
+      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      // });
+      // console.log(
+      //   `Successfully payed in lock ID: ${lock_account}`
+      // );
+
+      const tx1 = await program.rpc.unlock(		
+        {
+        accounts: {
+          lockAccount: lock_account, // publickey for our new account
+          authority: provider.wallet.publicKey, // publickey of our anchor wallet provider
+          systemProgram: SystemProgram.programId // just for Anchor reference
+        },
+        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      });
+      console.log(
+        `Successfully locked lock ID: ${lock_account} with authority ${provider.wallet.publicKey}`
+      );
+
+      const tx = await program.rpc.withdraw(		
+        new anchor.BN(initializerAmount/2),
+        {
+        accounts: {
+          lockAccount: lock_account, // publickey for our new account
+          owner: provider.wallet.publicKey, 
+          lockProgram: lock_account ,// just for Anchor reference,
+          systemProgram: SystemProgram.programId // just for Anchor reference
+        },
+        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      });
+      console.log(
+        `Successfully withdraw from lock ID: ${lock_account}`
+      );
+      // vault_account_pda = _vault_account_pda;
+      // vault_account_bump = _vault_account_bump;
+      // const [_vault_authority_pda, _vault_authority_bump] = await PublicKey.findProgramAddress(
+      //   [Buffer.from(anchor.utils.bytes.utf8.encode("escrowtest"))],
+      //   program.programId
+      // );
+      // vault_authority_pda = _vault_authority_pda;
+  
+      // await program.rpc.initialize(
+      //   vault_account_bump,
+      //   new anchor.BN(initializerAmount),
+      //   {
+      //     accounts: {
+      //       initializer: provider.wallet.publicKey,
+      //       vaultAccount: vault_account_pda,
+      //       escrowAccount: escrowAccount.publicKey,
+      //       systemProgram: anchor.web3.SystemProgram.programId,
+      //       rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      //       tokenProgram: TOKEN_PROGRAM_ID,
+      //     },
+      //     instructions: [
+      //       await program.account.escrowAccount.createInstruction(escrowAccount),
+      //     ],
+      //     signers: [escrowAccount],
+      //   }
+      // );
   
       // await program.rpc.calculate(
       //   {
