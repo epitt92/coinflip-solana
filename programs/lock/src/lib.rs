@@ -16,7 +16,6 @@ pub mod lock {
         //let tx  = &assign(lock_account.to_account_info().key, ctx.accounts.owner.to_account_info().key);
         lock_account.authority = authority;
         lock_account.owner = *ctx.accounts.owner.key;
-        lock_account.escrow = *ctx.accounts.escrow_account.key;
         lock_account.locked = false;
         lock_account.bump = bump;
         Ok(())
@@ -34,7 +33,7 @@ pub mod lock {
     pub fn withdraw(ctx: Context<Withdraw>, lamports: u64) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
         let transfer_instruction = &transfer(
-            &lock_account.escrow,
+            ctx.accounts.escrow_account.key,
             &lock_account.owner,
             lamports,
         );
@@ -43,7 +42,7 @@ pub mod lock {
         invoke_signed(
             transfer_instruction,
             &[
-                &lock_account.escrow.to_account_info(),
+                ctx.accounts.escrow_account.to_account_info(),
                 ctx.accounts.owner.to_account_info(),
                 ctx.accounts.system_program.to_account_info()
             ],
@@ -55,7 +54,7 @@ pub mod lock {
         let lock_account = &mut ctx.accounts.lock_account;
         let transfer_instruction = &transfer(
             &lock_account.owner,
-            &lock_account.escrow,
+            ctx.accounts.escrow_account.key,
             lamports,
         );
         msg!("Paying in {}", lamports);
@@ -63,7 +62,7 @@ pub mod lock {
             transfer_instruction,
             &[
                 ctx.accounts.owner.to_account_info(),
-                &lock_account.escrow.to_account_info(),       
+                ctx.accounts.escrow_account.to_account_info(),       
             ]
         )
     }
@@ -100,6 +99,8 @@ pub struct Withdraw<'info> {
     pub lock_account: Account<'info, LockAccount>,
     #[account(signer)]
     pub owner: AccountInfo<'info>,
+    #[account(mut)]
+    pub escrow_account: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 
 }
@@ -110,6 +111,8 @@ pub struct Payin<'info> {
     pub lock_account: Account<'info, LockAccount>,
     #[account(signer)]
     pub owner: AccountInfo<'info>,
+    #[account(mut)]
+    pub escrow_account: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -117,7 +120,6 @@ pub struct Payin<'info> {
 pub struct LockAccount {
     pub owner: Pubkey,
     pub authority: Pubkey,
-    pub escrow: Pubkey,
     pub locked: bool,
     bump: u8,
 }
