@@ -2,12 +2,9 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, CloseAccount, Mint, SetAuthority, TokenAccount, Transfer};
 use spl_token::instruction::AuthorityType;
 use anchor_lang::solana_program::{
-    account_info::{next_account_info, AccountInfo},
+    account_info::{AccountInfo},
     entrypoint::ProgramResult,
-    program,
     pubkey::Pubkey,
-    system_instruction,
-    system_program,
 };
 
 declare_id!("8uay33TErnMNRYFrsQTGsXqK1jzSZq9hDXGvEZAACPmd");
@@ -35,13 +32,13 @@ pub mod anchor_escrow {
         //     Some(vault_authority),
         // )?;
 
-        let ix = system_instruction::transfer(
+        let ix = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.initializer.key(),
             &ctx.accounts.vault_account.key(),
             amount,
         );
 
-        program::invoke(
+        anchor_lang::solana_program::program::invoke(
             &ix,
             &[
                 ctx.accounts.initializer.to_account_info(),
@@ -49,12 +46,12 @@ pub mod anchor_escrow {
             ],
         );
         let rev_amount = amount / 2;
-        let reverse = system_instruction::transfer(
+        let reverse = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.vault_account.key(),
             &ctx.accounts.initializer.key(),
             amount,
         );
-        program::invoke_signed(
+        anchor_lang::solana_program::program::invoke_signed(
             &reverse
             &[
                 ctx.accounts.vault_account.to_account_info(),
