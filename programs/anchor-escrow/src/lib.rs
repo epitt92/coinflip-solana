@@ -52,7 +52,7 @@ pub mod anchor_escrow {
             amount,
         );
         anchor_lang::solana_program::program::invoke_signed(
-            &reverse
+            &reverse,
             &[
                 ctx.accounts.vault_account.to_account_info(),
                 ctx.accounts.initializer.to_account_info(),
