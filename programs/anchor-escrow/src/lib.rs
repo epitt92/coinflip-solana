@@ -27,15 +27,6 @@ pub mod anchor_escrow {
         ctx.accounts.escrow_account.bump = _vault_account_bump;
         ctx.accounts.escrow_account.taker_amount = amount/2;
 
-        let (vault_authority, _vault_authority_bump) =
-            Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
-        let authority_seeds = &[&ESCROW_PDA_SEED[..], &[_vault_authority_bump]];
-        // token::set_authority(
-        //     ctx.accounts.into_set_authority_context(),
-        //     AuthorityType::AccountOwner,
-        //     Some(vault_authority),
-        // )?;
-
         let ix = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.initializer.key(),
             &ctx.accounts.vault_account.key(),
@@ -49,24 +40,6 @@ pub mod anchor_escrow {
                 ctx.accounts.vault_account.to_account_info(),
             ],
         );
-        
-
-        // fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
-        //     let cpi_accounts = Transfer {
-        //         from: self
-        //             .initializer_user_account
-        //             .to_account_info()
-        //             .clone(),
-        //         to: self.vault_account.to_account_info().clone(),
-        //         authority: self.initializer.clone(),
-        //     };
-        //     CpiContext::new(self.token_program.clone(), cpi_accounts)
-        // }
-
-        // token::transfer(
-        //     ctx.accounts.into_transfer_to_pda_context(),
-        //     ctx.accounts.escrow_account.amount,
-        // )?;
 
         Ok(())
     }
@@ -119,52 +92,6 @@ pub mod anchor_escrow {
         Ok(())
     }
 
-    // pub fn cancel(ctx: Context<Cancel>) -> Result<()> {
-    //     let (_vault_authority, vault_authority_bump) =
-    //         Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
-    //     let authority_seeds = &[&ESCROW_PDA_SEED[..], &[vault_authority_bump]];
-
-    //     token::transfer(
-    //         ctx.accounts
-    //             .into_transfer_to_initializer_context()
-    //             .with_signer(&[&authority_seeds[..]]),
-    //         ctx.accounts.escrow_account.initializer_amount,
-    //     )?;
-
-    //     token::close_account(
-    //         ctx.accounts
-    //             .into_close_context()
-    //             .with_signer(&[&authority_seeds[..]]),
-    //     )?;
-
-    //     Ok(())
-    // }
-
-    // pub fn exchange(ctx: Context<Exchange>) -> Result<()> {
-    //     let (_vault_authority, vault_authority_bump) =
-    //         Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
-    //     let authority_seeds = &[&ESCROW_PDA_SEED[..], &[vault_authority_bump]];
-
-    //     token::transfer(
-    //         ctx.accounts.into_transfer_to_initializer_context(),
-    //         ctx.accounts.escrow_account.taker_amount,
-    //     )?;
-
-    //     token::transfer(
-    //         ctx.accounts
-    //             .into_transfer_to_taker_context()
-    //             .with_signer(&[&authority_seeds[..]]),
-    //         ctx.accounts.escrow_account.initializer_amount,
-    //     )?;
-
-    //     token::close_account(
-    //         ctx.accounts
-    //             .into_close_context()
-    //             .with_signer(&[&authority_seeds[..]]),
-    //     )?;
-
-    //     Ok(())
-    // }
 }
 
 #[derive(Accounts)]
@@ -175,7 +102,7 @@ pub struct Initialize<'info> {
     pub initializer: AccountInfo<'info>,
     #[account(
         init,
-        seeds = [b"token-seed".as_ref()],
+        seeds = [b"escrowtest".as_ref()],
         bump,
         payer = initializer,
         space = 10240,

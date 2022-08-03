@@ -217,18 +217,18 @@ function App() {
         }
       );
   
-      await program.rpc.calculate(
-        {
-          accounts: {
-            initializer: provider.wallet.publicKey,
-            vaultAccount: vault_account_pda,
-            escrowAccount: escrowAccount.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-            tokenProgram: TOKEN_PROGRAM_ID,
-          }
-        }
-      );
+      // await program.rpc.calculate(
+      //   {
+      //     accounts: {
+      //       initializer: provider.wallet.publicKey,
+      //       vaultAccount: vault_account_pda,
+      //       escrowAccount: escrowAccount.publicKey,
+      //       systemProgram: anchor.web3.SystemProgram.programId,
+      //       rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      //       tokenProgram: TOKEN_PROGRAM_ID,
+      //     }
+      //   }
+      // );
   
       // const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-wallet")], programID);
       
