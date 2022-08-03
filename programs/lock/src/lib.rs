@@ -18,7 +18,6 @@ pub mod lock {
         let lock_account = &mut ctx.accounts.lock_account;
         //let tx  = &assign(lock_account.to_account_info().key, ctx.accounts.owner.to_account_info().key);
         lock_account.authority = authority;
-        lock_account.owner = *ctx.accounts.lock_account.key;
         lock_account.locked = false;
         lock_account.bump = bump;
         Ok(())
@@ -111,14 +110,13 @@ pub struct Withdraw<'info> {
 pub struct Payin<'info> {
     #[account(mut, signer)]
     pub lock_account: Account<'info, LockAccount>,
-    #[account(mut, has_one = lock_account)]
+    #[account(mut)]
     pub escrow_account: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[account]
 pub struct LockAccount {
-    pub owner: Pubkey,
     pub authority: Pubkey,
     pub locked: bool,
     bump: u8,
