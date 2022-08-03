@@ -43,7 +43,7 @@ pub mod lock {
         invoke_signed(
             transfer_instruction,
             &[
-                ctx.accounts.escrow.to_account_info(),
+                &lock_account.escrow.to_account_info(),
                 ctx.accounts.owner.to_account_info(),
                 ctx.accounts.system_program.to_account_info()
             ],
@@ -63,7 +63,7 @@ pub mod lock {
             transfer_instruction,
             &[
                 ctx.accounts.owner.to_account_info(),
-                ctx.accounts.escrow.to_account_info(),       
+                &lock_account.escrow.to_account_info(),       
             ]
         )
     }
