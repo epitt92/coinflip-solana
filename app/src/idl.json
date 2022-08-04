@@ -21,6 +21,11 @@
           "isSigner": true
         },
         {
+          "name": "poolSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -90,6 +95,11 @@
           "name": "owner",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "poolSigner",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "systemProgram",

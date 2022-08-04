@@ -114,11 +114,11 @@ function App() {
       console.log('airdrop success')
     
       const [lock_account, _escrow_account_bump] = await PublicKey.findProgramAddress(
-        [Buffer.from(anchor.utils.bytes.utf8.encode("base-taccount"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("base-aaccount"))],
         program.programId
       );
       const [escrow_account, bump] = await PublicKey.findProgramAddress(
-        [Buffer.from(anchor.utils.bytes.utf8.encode("flip-taccount"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("flip-aaccount"))],
         program.programId
       );
       //const utf8encoded = Buffer.from(bio);

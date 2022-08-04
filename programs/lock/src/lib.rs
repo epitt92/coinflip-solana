@@ -12,7 +12,7 @@ pub mod lock {
 
     use super::*;
 
-    const ESCROW_PDA_SEED: &[u8] = b"flip-taccount";
+    const ESCROW_PDA_SEED: &[u8] = b"flip-aaccount";
 
     pub fn initialize(ctx: Context<Initialize>, lock_bump:u8, bump: u8, authority: Pubkey) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
