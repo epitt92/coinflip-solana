@@ -45,7 +45,6 @@ pub mod lock {
             lamports,
         );
         msg!("Withdrawing {}", lamports);
-        msg!("ESCRO_PDA {}", ESCROW_PDA_SEED);
         msg!("bump {}", vault_authority_bump);
 
         invoke_signed(
