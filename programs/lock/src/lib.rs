@@ -45,15 +45,14 @@ pub mod lock {
             lamports,
         );
         msg!("Withdrawing {}", lamports);
-        msg!("ESCRO_PDA {}", ESCROW_PDA_SEED);
+        msg!(ESCROW_PDA_SEED);
         msg!("bump {}", vault_authority_bump);
 
         invoke_signed(
             transfer_instruction,
             &[
                 ctx.accounts.escrow_account.to_account_info(),
-                ctx.accounts.owner.to_account_info(),
-                ctx.accounts.system_program.to_account_info()
+                ctx.accounts.owner.to_account_info()
             ],
             &[&[&ESCROW_PDA_SEED[..], &[vault_authority_bump]]],
         )
