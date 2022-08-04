@@ -45,7 +45,6 @@ pub mod lock {
             lamports,
         );
         msg!("Withdrawing {}", lamports);
-        msg!("bump {}", vault_authority_bump);
 
         invoke_signed(
             transfer_instruction,
@@ -97,7 +96,7 @@ pub struct Initialize<'info> {
     pub owner: Signer<'info>,
     #[account(
         seeds = [b"flip-aaccount".as_ref()],
-        bump = bump,
+        bump = lock_account.bump,
     )]
     pub pool_signer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
@@ -121,7 +120,7 @@ pub struct Withdraw<'info> {
     pub owner: AccountInfo<'info>,
     #[account(
         seeds = [b"flip-aaccount".as_ref()],
-        bump = bump,
+        bump = lock_account.bump,
     )]
     pub pool_signer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
