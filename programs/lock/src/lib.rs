@@ -83,7 +83,7 @@ pub struct Initialize<'info> {
     payer=owner,
     space=8 + 32 + 32 + 1 + 1 ,
     seeds=[b"base-account".as_ref()],
-    lock_bump)
+    bump=lock_bump)
     ]
     pub lock_account: Account<'info, LockAccount>,
     #[account(init,
