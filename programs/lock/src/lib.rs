@@ -95,11 +95,6 @@ pub struct Initialize<'info> {
     pub escrow_account: AccountInfo<'info>,
     #[account(mut)]
     pub owner: Signer<'info>,
-    #[account(
-        seeds = [b"flip-aaccount".as_ref()],
-        bump = lock_account.bump,
-    )]
-    pub pool_signer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
