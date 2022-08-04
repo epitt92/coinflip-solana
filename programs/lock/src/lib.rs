@@ -93,7 +93,7 @@ pub struct Initialize<'info> {
     bump)
     ]
     pub escrow_account: AccountInfo<'info>,
-    #[account(mut, signer)]
+    #[account(mut)]
     pub owner: Signer<'info>,
     #[account(
         seeds = [b"flip-aaccount".as_ref()],
