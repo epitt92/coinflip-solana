@@ -114,30 +114,30 @@ function App() {
       console.log('airdrop success')
     
       const [lock_account, _escrow_account_bump] = await PublicKey.findProgramAddress(
-        [Buffer.from(anchor.utils.bytes.utf8.encode("lock-account"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("base-account"))],
         program.programId
       );
       const [escrow_account, bump] = await PublicKey.findProgramAddress(
-        [Buffer.from(anchor.utils.bytes.utf8.encode("escrow-account"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("flip-account"))],
         program.programId
       );
       //const utf8encoded = Buffer.from(bio);
       // Execute the RPC call
       console.log(lock_account.toBase58(), escrow_account.toBase58(), bump)
       
-      // const txi = await program.rpc.initialize(		
-      //   bump,	
-      //   provider.wallet.publicKey,
-      //   //new BN(anchor.web3.LAMPORTS_PER_SOL),
-      //   {
-      //   accounts: {
-      //     lockAccount: lock_account, // publickey for our new account
-      //     owner: provider.wallet.publicKey,
-      //     escrowAccount: escrow_account,
-      //     systemProgram: SystemProgram.programId // just for Anchor reference
-      //   },
-      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
-      // });
+      const txi = await program.rpc.initialize(		
+        bump,	
+        provider.wallet.publicKey,
+        //new BN(anchor.web3.LAMPORTS_PER_SOL),
+        {
+        accounts: {
+          lockAccount: lock_account, // publickey for our new account
+          owner: provider.wallet.publicKey,
+          escrowAccount: escrow_account,
+          systemProgram: SystemProgram.programId // just for Anchor reference
+        },
+        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      });
   
       // console.log(
       //   `Successfully intialized lock ID: ${lock_account} for user ${provider.wallet.publicKey}`
