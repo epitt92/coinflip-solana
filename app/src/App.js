@@ -179,7 +179,7 @@ function App() {
           owner: provider.wallet.publicKey,
           lockProgram: escrow_account ,// just for Anchor reference,
           escrowAccount: escrow_account,
-          systemProgram: SystemProgram.programId // just for Anchor reference
+          systemProgram: program.programId // just for Anchor reference
         },
         signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
       });

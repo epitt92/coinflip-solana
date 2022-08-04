@@ -36,9 +36,9 @@ pub mod lock {
     pub fn withdraw(ctx: Context<Withdraw>, lamports: u64) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
 
-        let (_vault_authority, vault_authority_bump) =
-            Pubkey::find_program_address(&[ESCROW_PDA_SEED], ctx.program_id);
-            
+        let seeds = &[&ESCROW_PDA_SEED[..], &[lock_account.bump]];
+        let pool_signer = &[&seeds[..]];
+        
         let transfer_instruction = &transfer(
             &ctx.accounts.escrow_account.key,
             &lock_account.owner,
@@ -52,9 +52,9 @@ pub mod lock {
             &[
                 ctx.accounts.escrow_account.to_account_info(),
                 ctx.accounts.owner.to_account_info(),
-                ctx.accounts.system_program.to_account_info()
+                ctx.accounts.pool_signer.to_account_info()
             ],
-            &[&[&ESCROW_PDA_SEED[..], &[vault_authority_bump]]],
+            &[],
         )
     }
 
@@ -83,19 +83,23 @@ pub struct Initialize<'info> {
     #[account(init,
     payer=owner,
     space=8 + 32 + 32 + 1 + 1 ,
-    seeds=[b"base-taccount".as_ref()],
+    seeds=[b"base-aaccount".as_ref()],
     bump)
     ]
     pub lock_account: Account<'info, LockAccount>,
     #[account(init,
     payer=owner,
     space=0,
-    seeds=[b"flip-taccount".as_ref()],
+    seeds=[b"flip-aaccount".as_ref()],
     bump)
     ]
     pub escrow_account: AccountInfo<'info>,
-    #[account(mut)]
     pub owner: Signer<'info>,
+    #[account(
+        seeds = [b"flip-aaccount".as_ref()],
+        bump = bump,
+    )]
+    pub pool_signer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -115,6 +119,11 @@ pub struct Withdraw<'info> {
     pub escrow_account: AccountInfo<'info>,
     #[account(signer)]
     pub owner: AccountInfo<'info>,
+    #[account(
+        seeds = [b"flip-aaccount".as_ref()],
+        bump = bump,
+    )]
+    pub pool_signer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 
 }
