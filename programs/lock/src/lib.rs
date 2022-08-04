@@ -12,7 +12,7 @@ pub mod lock {
 
     use super::*;
 
-    const ESCROW_PDA_SEED: &[u8] = b"flip-account";
+    const ESCROW_PDA_SEED: &[u8] = b"flip-taccount";
 
     pub fn initialize(ctx: Context<Initialize>, lock_bump:u8, bump: u8, authority: Pubkey) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
@@ -45,6 +45,8 @@ pub mod lock {
             lamports,
         );
         msg!("Withdrawing {}", lamports);
+        msg!("ESCRO_PDA {}", ESCROW_PDA_SEED);
+        msg!("bump {}", vault_authority_bump);
 
         invoke_signed(
             transfer_instruction,
@@ -82,14 +84,14 @@ pub struct Initialize<'info> {
     #[account(init,
     payer=owner,
     space=8 + 32 + 32 + 1 + 1 ,
-    seeds=[b"base-account".as_ref()],
+    seeds=[b"base-taccount".as_ref()],
     bump)
     ]
     pub lock_account: Account<'info, LockAccount>,
     #[account(init,
     payer=owner,
     space=0,
-    seeds=[b"flip-account".as_ref()],
+    seeds=[b"flip-taccount".as_ref()],
     bump)
     ]
     pub escrow_account: AccountInfo<'info>,
