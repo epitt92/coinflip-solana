@@ -51,7 +51,8 @@ pub mod lock {
             transfer_instruction,
             &[
                 ctx.accounts.escrow_account.to_account_info(),
-                ctx.accounts.owner.to_account_info()
+                ctx.accounts.owner.to_account_info(),
+                ctx.program_id.to_account_info()
             ],
             &[&[&ESCROW_PDA_SEED[..], &[vault_authority_bump]]],
         )

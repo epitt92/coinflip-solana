@@ -125,20 +125,20 @@ function App() {
       // Execute the RPC call
       console.log(lock_account.toBase58(), escrow_account.toBase58(), bump)
       
-      const txi = await program.rpc.initialize(		
-        _escrow_account_bump,
-        bump,	
-        provider.wallet.publicKey,
-        //new BN(anchor.web3.LAMPORTS_PER_SOL),
-        {
-        accounts: {
-          lockAccount: lock_account, // publickey for our new account
-          owner: provider.wallet.publicKey,
-          escrowAccount: escrow_account,
-          systemProgram: SystemProgram.programId // just for Anchor reference
-        },
-        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
-      });
+      // const txi = await program.rpc.initialize(		
+      //   _escrow_account_bump,
+      //   bump,	
+      //   provider.wallet.publicKey,
+      //   //new BN(anchor.web3.LAMPORTS_PER_SOL),
+      //   {
+      //   accounts: {
+      //     lockAccount: lock_account, // publickey for our new account
+      //     owner: provider.wallet.publicKey,
+      //     escrowAccount: escrow_account,
+      //     systemProgram: SystemProgram.programId // just for Anchor reference
+      //   },
+      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      // });
   
       console.log(
         `Successfully intialized lock ID: ${lock_account} for user ${provider.wallet.publicKey}`
