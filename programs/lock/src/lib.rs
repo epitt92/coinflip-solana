@@ -1,6 +1,6 @@
 
 use anchor_lang::{prelude::*, solana_program::system};
-use solana_program::{
+use anchor_lang::solana_program::{
     account_info::{next_account_info, AccountInfo},
     clock::Clock,
     entrypoint,
