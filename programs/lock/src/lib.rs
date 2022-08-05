@@ -111,7 +111,7 @@ pub mod lock {
         let award_amount :u64;
         
         if (c.unix_timestamp % 2) == is_head.into() {
-            if ctx.accounts.escrow_account.lamports() < ((amount * (coin_flip.win_returns as u64))/100) {
+            if ctx.accounts.escrow_account.lamports() < ((amount * (lock_account.win_returns as u64))/100) {
                 msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
 
                 // Transfer tokens from the vault to user vault.
@@ -119,7 +119,7 @@ pub mod lock {
 
             } else {
                 // Transfer tokens from the vault to user vault.
-                award_amount = (100 + coin_flip.win_returns as u64)/100;
+                award_amount = (100 + lock_account.win_returns as u64)/100;
                 msg!("Congratulations, You won!");
             }
             **ctx.accounts.escrow_account.try_borrow_mut_lamports()? -= award_amount;
