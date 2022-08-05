@@ -117,7 +117,7 @@ pub struct Withdraw<'info> {
     pub owner: AccountInfo<'info>,
     #[account(
         seeds = [b"flip-aaccount".as_ref()],
-        bump = lock_account.bump,
+        bump,
     )]
     pub pool_signer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
