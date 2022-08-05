@@ -115,6 +115,7 @@ pub struct Withdraw<'info> {
     pub owner: AccountInfo<'info>,
     #[account(mut)]
     pub pool_signer: UncheckedAccount<'info>,
+    #[account(mut)]
     pub system_program: AccountInfo<'info>,
 
 }
