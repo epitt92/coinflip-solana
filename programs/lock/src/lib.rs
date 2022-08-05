@@ -49,7 +49,7 @@ pub mod lock {
 
         **ctx.accounts.pool_signer.try_borrow_mut_lamports()? -= lamports;
         **ctx.accounts.owner.try_borrow_mut_lamports()? += lamports;
-        Ok(())
+        Ok(());
 
         // invoke_signed(
         //     transfer_instruction,
@@ -78,8 +78,7 @@ pub mod lock {
                 ctx.accounts.owner.to_account_info(),
                 ctx.accounts.escrow_account.to_account_info(),       
             ]
-        )
-        Ok(())
+        );
 
     }
 }
