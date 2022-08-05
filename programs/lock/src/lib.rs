@@ -1,5 +1,14 @@
 
-use anchor_lang::{prelude::*, solana_program::system_program};
+use anchor_lang::{prelude::*, solana_program::system};
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    clock::Clock,
+    entrypoint,
+    entrypoint::ProgramResult,
+    msg,
+    pubkey::Pubkey,
+    sysvar::Sysvar,
+};
 
 declare_id!("EVLUk8YzxevK24RRHEos5WxcXTqx8dDu79Xa4gGkQKMU");
 
@@ -83,9 +92,6 @@ pub mod lock {
     }
 
     pub fn bet(ctx: Context<Bet>, isHead :u8, amount: u64) -> ProgramResult {
-        if amount == 0 {
-            return Err(ErrorCode::AmountMustBeGreaterThanZero.into());
-        }
 
         let lock_account = &mut ctx.accounts.lock_account;
         let c = clock::Clock::get().unwrap();
