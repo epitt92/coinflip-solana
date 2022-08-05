@@ -65,21 +65,25 @@ pub mod lock {
 
     pub fn payin(ctx: Context<Payin>, lamports: u64) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
-            
-        let transfer_instruction = &transfer(
-            &lock_account.owner,
-            &ctx.accounts.escrow_account.key,
-            lamports,
-        );
-        msg!("Paying in {}", lamports);
-        invoke(
-            transfer_instruction,
-            &[
-                ctx.accounts.owner.to_account_info(),
-                ctx.accounts.escrow_account.to_account_info(),       
-            ]
-        )
+
+        **ctx.accounts.pool_signer.try_borrow_mut_lamports()? += lamports;
+        **ctx.accounts.owner.try_borrow_mut_lamports()? -= lamports;
+        Ok(())
+        // let transfer_instruction = &transfer(
+        //     &lock_account.owner,
+        //     &ctx.accounts.escrow_account.key,
+        //     lamports,
+        // );
+        // msg!("Paying in {}", lamports);
+        // invoke(
+        //     transfer_instruction,
+        //     &[
+        //         ctx.accounts.owner.to_account_info(),
+        //         ctx.accounts.escrow_account.to_account_info(),       
+        //     ]
+        // )
     }
+    
 }
 
 #[derive(Accounts)]
