@@ -82,11 +82,6 @@
           "isSigner": false
         },
         {
-          "name": "escrowAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "owner",
           "isMut": false,
           "isSigner": true

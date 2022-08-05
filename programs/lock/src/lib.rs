@@ -107,16 +107,12 @@ pub struct Unlock<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(nonce: u8)]
 pub struct Withdraw<'info> {
-    #[account(mut,constraint = !lock_account.locked)]
+    #[account(mut)]
     pub lock_account: Account<'info, LockAccount>,
     #[account(signer)]
     pub owner: AccountInfo<'info>,
-    #[account(
-        seeds = [b"flip-aaccount".as_ref()],
-        bump = nonce,
-    )]
+    #[account(mut)]
     pub pool_signer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 
