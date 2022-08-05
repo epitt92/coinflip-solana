@@ -112,12 +112,12 @@ pub mod lock {
         );
         
         if (c.unix_timestamp % 2) == isHead {
-            let award_amount;
-            if ctx.accounts.escrow_account.amount < (amount * 95/100) {
+            let award_amount = 0;
+            if ctx.accounts.escrow_account.lamports < (amount * 95/100) {
                 msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
 
                 // Transfer tokens from the vault to user vault.
-                award_amount = accounts.escrow_account.amount;
+                award_amount = accounts.escrow_account.lamports;
 
             } else {
                 // Transfer tokens from the vault to user vault.
@@ -125,7 +125,7 @@ pub mod lock {
                 msg!("Congratulations, You won!");
             }
             **ctx.accounts.escrow_account.try_borrow_mut_lamports()? -= award_amount;
-            **ctx.accounts.owner.try_borrow_mut_lamports()? += ctx.award_amount;
+            **ctx.accounts.owner.try_borrow_mut_lamports()? += award_amount;
         } else {
             msg!("Sorry, You lost!");
         }
