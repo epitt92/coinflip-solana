@@ -52,6 +52,7 @@ pub mod lock {
             &[
                 ctx.accounts.pool_signer.to_account_info(),
                 ctx.accounts.owner.to_account_info(),
+                ctx.accounts.lock_program.to_account_info(),
                 ctx.accounts.system_program.to_account_info()
             ],
             pool_signer,
@@ -115,9 +116,8 @@ pub struct Withdraw<'info> {
     pub owner: AccountInfo<'info>,
     #[account(mut)]
     pub pool_signer: UncheckedAccount<'info>,
-    #[account(mut)]
-    pub system_program: AccountInfo<'info>,
-
+    pub lock_program: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
