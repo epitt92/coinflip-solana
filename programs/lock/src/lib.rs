@@ -94,7 +94,7 @@ pub mod lock {
     pub fn bet(ctx: Context<Bet>, isHead :u8, amount: u64) -> ProgramResult {
 
         let lock_account = &mut ctx.accounts.lock_account;
-        let c = clock::Clock::get().unwrap();
+        let c = Clock::get().unwrap();
 
         // Transfer tokens into the token vault.
         let transfer_instruction = &transfer(
