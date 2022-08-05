@@ -40,23 +40,26 @@ pub mod lock {
         // *ctx.bumps.get("vault_authority").unwrap();
         let pool_signer = &[&seeds[..]];
         
-        let transfer_instruction = &transfer(
-            &ctx.accounts.pool_signer.key,
-            &lock_account.owner,
-            lamports,
-        );
+        // let transfer_instruction = &transfer(
+        //     &ctx.accounts.pool_signer.key,
+        //     &lock_account.owner,
+        //     lamports,
+        // );
         msg!("Withdrawing {}", lamports);
 
-        invoke_signed(
-            transfer_instruction,
-            &[
-                ctx.accounts.pool_signer.to_account_info(),
-                ctx.accounts.owner.to_account_info(),
-                ctx.accounts.lock_program.to_account_info(),
-                ctx.accounts.system_program.to_account_info()
-            ],
-            pool_signer,
-        )
+        **ctx.accounts.pool_signer.try_borrow_mut_lamports()? -= lamports;
+        **ctx.accounts.owner.try_borrow_mut_lamports()? += lamports;
+
+        // invoke_signed(
+        //     transfer_instruction,
+        //     &[
+        //         ctx.accounts.pool_signer.to_account_info(),
+        //         ctx.accounts.owner.to_account_info(),
+        //         ctx.accounts.lock_program.to_account_info(),
+        //         ctx.accounts.system_program.to_account_info()
+        //     ],
+        //     pool_signer,
+        // )
     }
 
     pub fn payin(ctx: Context<Payin>, lamports: u64) -> ProgramResult {
