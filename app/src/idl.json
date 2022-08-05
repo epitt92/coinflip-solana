@@ -92,8 +92,13 @@
           "isSigner": false
         },
         {
+          "name": "lockProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         }
       ],
