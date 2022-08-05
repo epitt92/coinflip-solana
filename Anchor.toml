@@ -5,7 +5,7 @@ lock = "EVLUk8YzxevK24RRHEos5WxcXTqx8dDu79Xa4gGkQKMU"
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "devnet"
+cluster = "testnet"
 wallet = "config/solana/id.json"
 
 [scripts]
