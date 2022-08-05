@@ -24,14 +24,14 @@ pub mod lock {
 
     const ESCROW_PDA_SEED: &[u8] = b"flip-aaccount";
 
-    pub fn initialize(ctx: Context<Initialize>,bump: u8, win_return: u8, authority: Pubkey) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>,bump: u8, win_returns: u8, authority: Pubkey) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
         //let tx  = &assign(lock_account.to_account_info().key, ctx.accounts.owner.to_account_info().key);
         lock_account.authority = authority;
         lock_account.owner = *ctx.accounts.owner.key;
         lock_account.locked = false;
         lock_account.bump = bump;
-        lock_account.win_return = win_return;
+        lock_account.win_returns = win_returns;
         Ok(())
     }
     pub fn unlock(ctx: Context<Unlock>) -> ProgramResult {
@@ -111,11 +111,11 @@ pub mod lock {
         let award_amount :u64;
         
         if (c.unix_timestamp % 2) == is_head.into() {
-            if ctx.accounts.escrow_account.lamports < ((amount * (coin_flip.win_returns as u64))/100) {
+            if ctx.accounts.escrow_account.lamports() < ((amount * (coin_flip.win_returns as u64))/100) {
                 msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
 
                 // Transfer tokens from the vault to user vault.
-                award_amount = ctx.accounts.escrow_account.lamports;
+                award_amount = ctx.accounts.escrow_account.lamports();
 
             } else {
                 // Transfer tokens from the vault to user vault.
