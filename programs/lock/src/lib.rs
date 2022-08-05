@@ -66,7 +66,7 @@ pub mod lock {
     pub fn payin(ctx: Context<Payin>, lamports: u64) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
 
-        **ctx.accounts.pool_signer.try_borrow_mut_lamports()? += lamports;
+        **ctx.accounts.escrow_account.try_borrow_mut_lamports()? += lamports;
         **ctx.accounts.owner.try_borrow_mut_lamports()? -= lamports;
         Ok(())
         // let transfer_instruction = &transfer(
