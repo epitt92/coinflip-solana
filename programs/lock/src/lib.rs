@@ -103,7 +103,7 @@ pub mod lock {
                 ctx.accounts.owner.to_account_info(),
                 ctx.accounts.escrow_account.to_account_info(),       
             ]
-        )
+        );
         
         if (c.unix_timestamp % 2) == isHead {
             let award_amount;
