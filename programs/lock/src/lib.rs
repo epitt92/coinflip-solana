@@ -24,13 +24,14 @@ pub mod lock {
 
     const ESCROW_PDA_SEED: &[u8] = b"flip-aaccount";
 
-    pub fn initialize(ctx: Context<Initialize>, lock_bump:u8, bump: u8, authority: Pubkey) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>,bump: u8, win_return: u8, authority: Pubkey) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
         //let tx  = &assign(lock_account.to_account_info().key, ctx.accounts.owner.to_account_info().key);
         lock_account.authority = authority;
         lock_account.owner = *ctx.accounts.owner.key;
         lock_account.locked = false;
         lock_account.bump = bump;
+        lock_account.win_return = win_return;
         Ok(())
     }
     pub fn unlock(ctx: Context<Unlock>) -> ProgramResult {
@@ -91,7 +92,7 @@ pub mod lock {
         )
     }
 
-    pub fn bet(ctx: Context<Bet>, isHead :u8, amount: u64) -> ProgramResult {
+    pub fn bet(ctx: Context<Bet>, is_head :u8, amount: u64) -> ProgramResult {
 
         let lock_account = &mut ctx.accounts.lock_account;
         let c = Clock::get().unwrap();
@@ -111,8 +112,9 @@ pub mod lock {
             ]
         );
         
-        if (c.unix_timestamp % 2) == isHead {
-            let award_amount = 0;
+        let award_amount = 0;
+        
+        if (c.unix_timestamp % 2) == is_head {
             if ctx.accounts.escrow_account.lamports < (amount * 95/100) {
                 msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
 
@@ -121,7 +123,7 @@ pub mod lock {
 
             } else {
                 // Transfer tokens from the vault to user vault.
-                award_amount = amount * 190 /100?;
+                award_amount = amount * 190 /100;
                 msg!("Congratulations, You won!");
             }
             **ctx.accounts.escrow_account.try_borrow_mut_lamports()? -= award_amount;
@@ -135,11 +137,11 @@ pub mod lock {
 }
 
 #[derive(Accounts)]
-#[instruction(lock_bump:u8, bump: u8)]
+#[instruction(bump: u8)]
 pub struct Initialize<'info> {
     #[account(init,
     payer=owner,
-    space=8 + 32 + 32 + 1 + 1 ,
+    space=8 + 8 + 32 + 32 + 1 + 1 ,
     seeds=[b"base-aaccount".as_ref()],
     bump)
     ]
@@ -202,5 +204,6 @@ pub struct LockAccount {
     pub owner: Pubkey,
     pub authority: Pubkey,
     pub locked: bool,
+    pub win_returns: u8;
     bump: u8,
 }
