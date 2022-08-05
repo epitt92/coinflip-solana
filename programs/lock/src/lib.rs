@@ -1,3 +1,4 @@
+
 use anchor_lang::{prelude::*, solana_program::system_program};
 
 declare_id!("EVLUk8YzxevK24RRHEos5WxcXTqx8dDu79Xa4gGkQKMU");
@@ -65,25 +66,66 @@ pub mod lock {
 
     pub fn payin(ctx: Context<Payin>, lamports: u64) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
-
-        **ctx.accounts.escrow_account.try_borrow_mut_lamports()? += lamports;
-        **ctx.accounts.owner.try_borrow_mut_lamports()? -= lamports;
-        Ok(())
-        // let transfer_instruction = &transfer(
-        //     &lock_account.owner,
-        //     &ctx.accounts.escrow_account.key,
-        //     lamports,
-        // );
-        // msg!("Paying in {}", lamports);
-        // invoke(
-        //     transfer_instruction,
-        //     &[
-        //         ctx.accounts.owner.to_account_info(),
-        //         ctx.accounts.escrow_account.to_account_info(),       
-        //     ]
-        // )
+            
+        let transfer_instruction = &transfer(
+            &lock_account.owner,
+            &ctx.accounts.escrow_account.key,
+            lamports,
+        );
+        msg!("Paying in {}", lamports);
+        invoke(
+            transfer_instruction,
+            &[
+                ctx.accounts.owner.to_account_info(),
+                ctx.accounts.escrow_account.to_account_info(),       
+            ]
+        )
     }
-    
+
+    pub fn bet(ctx: Context<Bet>, isHead :u8, amount: u64) -> ProgramResult {
+        if amount == 0 {
+            return Err(ErrorCode::AmountMustBeGreaterThanZero.into());
+        }
+
+        let lock_account = &mut ctx.accounts.lock_account;
+        let c = clock::Clock::get().unwrap();
+
+        // Transfer tokens into the token vault.
+        let transfer_instruction = &transfer(
+            &ctx.accounts.owner.key,
+            &ctx.accounts.escrow_account.key,
+            lamports,
+        );
+        msg!("Paying in {}", lamports);
+        invoke(
+            transfer_instruction,
+            &[
+                ctx.accounts.owner.to_account_info(),
+                ctx.accounts.escrow_account.to_account_info(),       
+            ]
+        )
+        
+        if (c.unix_timestamp % 2) != 0 {
+            let award_amount;
+            if ctx.accounts.escrow_account.amount < (amount * 95/100) {
+                msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
+
+                // Transfer tokens from the vault to user vault.
+                award_amount = accounts.escrow_account.amount;
+
+            } else {
+                // Transfer tokens from the vault to user vault.
+                award_amount = amount * 190 /100)?;
+                msg!("Congratulations, You won!");
+            }
+            **ctx.accounts.escrow_account.try_borrow_mut_lamports()? -= award_amount;
+            **ctx.accounts.owner.try_borrow_mut_lamports()? += ctx.award_amount;
+        } else {
+            msg!("Sorry, You lost!");
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -123,8 +165,18 @@ pub struct Withdraw<'info> {
     #[account(signer)]
     pub owner: AccountInfo<'info>,
     #[account(mut)]
-    pub pool_signer: UncheckedAccount<'info>,
-    pub lock_program: AccountInfo<'info>,
+    pub escrow_account: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct Bet<'info> {
+    #[account(mut)]
+    pub lock_account: Account<'info, LockAccount>,
+    #[account(signer)]
+    pub owner: AccountInfo<'info>,
+    #[account(mut)]
+    pub escrow_account: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -146,4 +198,3 @@ pub struct LockAccount {
     pub locked: bool,
     bump: u8,
 }
-
