@@ -22,7 +22,7 @@ pub mod lock {
 
     use super::*;
 
-    const ESCROW_PDA_SEED: &[u8] = b"flip-aaccount";
+    const ESCROW_PDA_SEED: &[u8] = b"vault-testaccount";
 
     pub fn initialize(ctx: Context<Initialize>,bump: u8, win_returns: u8, authority: Pubkey) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
@@ -138,14 +138,14 @@ pub struct Initialize<'info> {
     #[account(init,
     payer=owner,
     space=8 + 8 + 32 + 32 + 1 + 1 ,
-    seeds=[b"base-aaccount".as_ref()],
+    seeds=[b"base-testaccount".as_ref()],
     bump)
     ]
     pub lock_account: Account<'info, LockAccount>,
     #[account(init,
     payer=owner,
     space=0,
-    seeds=[b"flip-aaccount".as_ref()],
+    seeds=[b"vault-testaccount".as_ref()],
     bump)
     ]
     pub escrow_account: AccountInfo<'info>,

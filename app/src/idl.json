@@ -28,11 +28,11 @@
       ],
       "args": [
         {
-          "name": "lockBump",
+          "name": "bump",
           "type": "u8"
         },
         {
-          "name": "bump",
+          "name": "winReturns",
           "type": "u8"
         },
         {
@@ -87,13 +87,8 @@
           "isSigner": true
         },
         {
-          "name": "poolSigner",
+          "name": "escrowAccount",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "lockProgram",
-          "isMut": false,
           "isSigner": false
         },
         {
@@ -139,6 +134,41 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "bet",
+      "accounts": [
+        {
+          "name": "lockAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "isHead",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -158,6 +188,10 @@
           {
             "name": "locked",
             "type": "bool"
+          },
+          {
+            "name": "winReturns",
+            "type": "u8"
           },
           {
             "name": "bump",
