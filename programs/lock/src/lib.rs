@@ -41,7 +41,7 @@ pub mod lock {
         let pool_signer = &[&seeds[..]];
         
         let transfer_instruction = &transfer(
-            &ctx.accounts.escrow_account.key,
+            &ctx.accounts.pool_signer.key,
             &lock_account.owner,
             lamports,
         );
@@ -50,9 +50,8 @@ pub mod lock {
         invoke_signed(
             transfer_instruction,
             &[
-                ctx.accounts.escrow_account.to_account_info(),
-                ctx.accounts.owner.to_account_info(),
-                ctx.accounts.pool_signer.to_account_info()
+                ctx.accounts.pool_signer.to_account_info(),
+                ctx.accounts.owner.to_account_info()
             ],
             &[],
         )
@@ -108,16 +107,15 @@ pub struct Unlock<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(nonce: u8)]
 pub struct Withdraw<'info> {
     #[account(mut,constraint = !lock_account.locked)]
     pub lock_account: Account<'info, LockAccount>,
-    #[account(mut)]
-    pub escrow_account: AccountInfo<'info>,
     #[account(signer)]
     pub owner: AccountInfo<'info>,
     #[account(
         seeds = [b"flip-aaccount".as_ref()],
-        bump,
+        bump = nonce,
     )]
     pub pool_signer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
