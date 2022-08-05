@@ -51,9 +51,10 @@ pub mod lock {
             transfer_instruction,
             &[
                 ctx.accounts.pool_signer.to_account_info(),
-                ctx.accounts.owner.to_account_info()
+                ctx.accounts.owner.to_account_info(),
+                ctx.accounts.system_program.to_account_info()
             ],
-            &[],
+            pool_signer,
         )
     }
 

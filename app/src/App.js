@@ -178,7 +178,7 @@ function App() {
           lockAccount: lock_account, // publickey for our new account
           owner: provider.wallet.publicKey,
           poolSigner: escrow_account,
-          systemProgram: program.programId // just for Anchor reference
+          systemProgram: SystemProgram.programId // just for Anchor reference
         },
         signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
       });
