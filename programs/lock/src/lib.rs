@@ -1,5 +1,5 @@
 
-use anchor_lang::{prelude::*, solana_program::system};
+use anchor_lang::{prelude::*, solana_program::system_program};
 use anchor_lang::solana_program::{
     account_info::{next_account_info, AccountInfo},
     clock::Clock,
@@ -47,10 +47,6 @@ pub mod lock {
     pub fn withdraw(ctx: Context<Withdraw>, lamports: u64) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
 
-        let seeds = &[&ESCROW_PDA_SEED[..], &[lock_account.bump]];
-        // *ctx.bumps.get("vault_authority").unwrap();
-        let pool_signer = &[&seeds[..]];
-        
         // let transfer_instruction = &transfer(
         //     &ctx.accounts.pool_signer.key,
         //     &lock_account.owner,
@@ -58,7 +54,7 @@ pub mod lock {
         // );
         msg!("Withdrawing {}", lamports);
 
-        **ctx.accounts.pool_signer.try_borrow_mut_lamports()? -= lamports;
+        **ctx.accounts.escrow_account.try_borrow_mut_lamports()? -= lamports;
         **ctx.accounts.owner.try_borrow_mut_lamports()? += lamports;
         Ok(())
 
@@ -101,9 +97,9 @@ pub mod lock {
         let transfer_instruction = &transfer(
             &ctx.accounts.owner.key,
             &ctx.accounts.escrow_account.key,
-            lamports,
+            amount,
         );
-        msg!("Paying in {}", lamports);
+        msg!("Paying in {}", amount);
         invoke(
             transfer_instruction,
             &[
@@ -111,19 +107,19 @@ pub mod lock {
                 ctx.accounts.escrow_account.to_account_info(),       
             ]
         );
+
+        let award_amount :u64;
         
-        let award_amount = 0;
-        
-        if (c.unix_timestamp % 2) == is_head {
-            if ctx.accounts.escrow_account.lamports < (amount * 95/100) {
+        if (c.unix_timestamp % 2) == is_head.into() {
+            if ctx.accounts.escrow_account.lamports < ((amount * (coin_flip.win_returns as u64))/100) {
                 msg!("Congratulations, You won! Sry, we didn't have enough reward to gib you. So, we'll gib you all the remaining reward in the vault");
 
                 // Transfer tokens from the vault to user vault.
-                award_amount = accounts.escrow_account.lamports;
+                award_amount = ctx.accounts.escrow_account.lamports;
 
             } else {
                 // Transfer tokens from the vault to user vault.
-                award_amount = amount * 190 /100;
+                award_amount = (100 + coin_flip.win_returns as u64)/100;
                 msg!("Congratulations, You won!");
             }
             **ctx.accounts.escrow_account.try_borrow_mut_lamports()? -= award_amount;
@@ -204,6 +200,6 @@ pub struct LockAccount {
     pub owner: Pubkey,
     pub authority: Pubkey,
     pub locked: bool,
-    pub win_returns: u8;
+    pub win_returns: u8,
     bump: u8,
 }
