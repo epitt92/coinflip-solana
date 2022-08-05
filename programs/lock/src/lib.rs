@@ -37,6 +37,7 @@ pub mod lock {
         let lock_account = &mut ctx.accounts.lock_account;
 
         let seeds = &[&ESCROW_PDA_SEED[..], &[lock_account.bump]];
+        // *ctx.bumps.get("vault_authority").unwrap();
         let pool_signer = &[&seeds[..]];
         
         let transfer_instruction = &transfer(
@@ -50,8 +51,9 @@ pub mod lock {
             transfer_instruction,
             &[
                 ctx.accounts.escrow_account.to_account_info(),
-                ctx.accounts.owner.to_account_info(),
-                ctx.accounts.pool_signer.to_account_info()
+                ctx.accounts.owner.to_account_info(), 
+                ctx.accounts.system_program.to_account_info()
+                // ctx.accounts.pool_signer.to_account_info()
             ],
             &[],
         )
@@ -70,7 +72,8 @@ pub mod lock {
             transfer_instruction,
             &[
                 ctx.accounts.owner.to_account_info(),
-                ctx.accounts.escrow_account.to_account_info(),       
+                ctx.accounts.escrow_account.to_account_info()
+
             ]
         )
     }
@@ -114,11 +117,6 @@ pub struct Withdraw<'info> {
     pub escrow_account: AccountInfo<'info>,
     #[account(signer)]
     pub owner: AccountInfo<'info>,
-    #[account(
-        seeds = [b"flip-aaccount".as_ref()],
-        bump = lock_account.bump,
-    )]
-    pub pool_signer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 
 }
