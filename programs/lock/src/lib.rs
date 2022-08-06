@@ -122,6 +122,8 @@ pub mod lock {
                 award_amount = (100 + lock_account.win_returns as u64)/100;
                 msg!("Congratulations, You won!");
             }
+
+            msg!("award amount {}", award_amount);
             **ctx.accounts.escrow_account.try_borrow_mut_lamports()? -= award_amount;
             **ctx.accounts.owner.try_borrow_mut_lamports()? += award_amount;
         // } else {
