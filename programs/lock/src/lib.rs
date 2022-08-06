@@ -119,7 +119,7 @@ pub mod lock {
 
             } else {
                 // Transfer tokens from the vault to user vault.
-                award_amount = (100 + lock_account.win_returns as u64)/100;
+                award_amount = amount * (100 + lock_account.win_returns as u64)/100;
                 msg!("Congratulations, You won!");
             }
 
