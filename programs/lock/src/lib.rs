@@ -24,14 +24,14 @@ pub mod lock {
 
     const ESCROW_PDA_SEED: &[u8] = b"vault-testaccount";
 
-    pub fn initialize(ctx: Context<Initialize>,bump: u8, win_returns: u8, authority: Pubkey) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>,bump: u8, authority: Pubkey) -> ProgramResult {
         let lock_account = &mut ctx.accounts.lock_account;
         //let tx  = &assign(lock_account.to_account_info().key, ctx.accounts.owner.to_account_info().key);
         lock_account.authority = authority;
         lock_account.owner = *ctx.accounts.owner.key;
         lock_account.locked = false;
         lock_account.bump = bump;
-        lock_account.win_returns = win_returns;
+        lock_account.win_returns = 90;
         Ok(())
     }
     pub fn unlock(ctx: Context<Unlock>) -> ProgramResult {
@@ -137,7 +137,7 @@ pub mod lock {
 pub struct Initialize<'info> {
     #[account(init,
     payer=owner,
-    space=8 + 8 + 32 + 32 + 1 + 1 ,
+    space= 32 + 8 + 32 + 32 + 1 + 1 ,
     seeds=[b"base-testaccount".as_ref()],
     bump)
     ]
