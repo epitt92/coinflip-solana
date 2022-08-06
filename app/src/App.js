@@ -5,6 +5,7 @@ import {
   Program, Provider, web3
 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
+
 import idl from './idl.json';
 
 import { TOKEN_PROGRAM_ID, BN } from "@solana/spl-token";
@@ -33,10 +34,12 @@ const programID = new PublicKey(idl.metadata.address);
 const network = clusterApiUrl('testnet');
 
 function App() {
-  const [value, setValue] = useState(null);
+  const [value, setValue] = useState(0.05);
   const wallet = useWallet();
+  
+  const initializerAmount = 10000000;
   async function getProvider() {
-
+    
     // const network = "https://api.testnet.solana.com";
     const connection = new Connection(network, opts.preflightCommitment);
 
@@ -46,73 +49,13 @@ function App() {
     return provider;
   }
 
-  const createMint = async (connection) => {
-    const provider = await getProvider()
-
-    const tokenMint = new anchor.web3.Keypair();
-    const lamportsForMint = await provider.connection.getMinimumBalanceForRentExemption(spl.MintLayout.span);
-    let tx = new anchor.web3.Transaction();
-
-    // Allocate mint
-    tx.add(
-        anchor.web3.SystemProgram.createAccount({
-            programId: spl.TOKEN_PROGRAM_ID,
-            space: spl.MintLayout.span,
-            fromPubkey: provider.wallet.publicKey,
-            newAccountPubkey: tokenMint.publicKey,
-            lamports: lamportsForMint,
-        })
-    )
-    // Allocate wallet account
-    tx.add(
-        spl.Token.createInitMintInstruction(
-            spl.TOKEN_PROGRAM_ID,
-            tokenMint.publicKey,
-            6,
-            provider.wallet.publicKey,
-            provider.wallet.publicKey,
-        )
-    );
-    const signature = await provider.send(tx, [tokenMint]);
-
-    console.log(`[${tokenMint.publicKey}] Created new mint account at ${signature}`);
-    return tokenMint.publicKey;
-  }
-
-  async function createCounter() {    
+  async function Bet(is_head) {    
     console.log('started')
     const provider = await getProvider()
     /* create the program interface combining the idl, program ID, and provider */
     const program = new Program(idl, programID, provider);
-
-    // let mintAddress = await createMint(provider.connection);
-
-    let mintA = null;
-    let mintB = null;
-    let initializerTokenAccountA = null;
-    let initializerTokenAccountB = null;
-    let takerTokenAccountA = null;
-    let takerTokenAccountB = null;
-    let vault_account_pda = null;
-    let vault_account_bump = null;
-    let vault_authority_pda = null;
-  
-    const takerAmount = 1000;
-    const initializerAmount = 10000000;
-    const escrowAccount = anchor.web3.Keypair.generate();
-    const payer = anchor.web3.Keypair.generate();
-    const mintAuthority = anchor.web3.Keypair.generate();
-    const initializerMainAccount = anchor.web3.Keypair.generate();
-    const takerMainAccount = anchor.web3.Keypair.generate();
-
-    console.log(escrowAccount.publicKey.toBase58())
-    console.log(payer.publicKey.toBase58())
-    console.log(initializerMainAccount.publicKey.toBase58())
-    console.log(takerMainAccount.publicKey.toBase58())
-
+    const amount = value * anchor.web3.LAMPORTS_PER_SOL;
     try {
-      console.log('airdrop success')
-    
       const [lock_account, _escrow_account_bump] = await PublicKey.findProgramAddress(
         [Buffer.from(anchor.utils.bytes.utf8.encode("base-testaccount"))],
         program.programId
@@ -121,7 +64,61 @@ function App() {
         [Buffer.from(anchor.utils.bytes.utf8.encode("vault-testaccount"))],
         program.programId
       );
-      //const utf8encoded = Buffer.from(bio);
+      // Execute the RPC call
+      const txt = await program.rpc.bet( is_head,		
+        new anchor.BN(amount),
+        {
+        accounts: {
+          lockAccount: lock_account, // publickey for our new account
+          owner: provider.wallet.publicKey,
+          escrowAccount: escrow_account,
+          systemProgram: SystemProgram.programId // just for Anchor reference
+        },
+        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      });
+      console.log(txt)
+      console.log(
+        `Successfully withdraw from lock ID: ${lock_account}`
+      );
+      let getTxReq = {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getTransaction",
+        params: [
+          txt,
+          "json"
+        ]
+      }
+      let res = await fetch(network, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(getTxReq)
+      });
+      const resData = await res.json();
+      console.log(resData);
+    } catch (err) {
+      if(String(err).indexOf('Network request failed') !== -1){
+        alert('Network Error');
+      }
+    }
+  }
+  async function Initialize() {    
+    const provider = await getProvider()
+    /* create the program interface combining the idl, program ID, and provider */
+    const program = new Program(idl, programID, provider);
+  
+    try {
+      const [lock_account, _escrow_account_bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("base-testaccount"))],
+        program.programId
+      );
+      const [escrow_account, bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("vault-testaccount"))],
+        program.programId
+      );
       // Execute the RPC call
       console.log(lock_account.toBase58(), escrow_account.toBase58(), bump)
       
@@ -129,7 +126,6 @@ function App() {
         bump,	
         90,
         provider.wallet.publicKey,
-        //new BN(anchor.web3.LAMPORTS_PER_SOL),
         {
         accounts: {
           lockAccount: lock_account, // publickey for our new account
@@ -142,6 +138,24 @@ function App() {
   
       console.log(
         `Successfully intialized lock ID: ${lock_account} for user ${provider.wallet.publicKey}`
+      );
+    } catch (err) {
+      console.log("Transaction error: ", err);
+    }
+  }
+  async function Deposit() {    
+    const provider = await getProvider()
+    /* create the program interface combining the idl, program ID, and provider */
+    const program = new Program(idl, programID, provider);
+
+    try {
+      const [lock_account, _escrow_account_bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("base-testaccount"))],
+        program.programId
+      );
+      const [escrow_account, bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("vault-testaccount"))],
+        program.programId
       );
       const tx2 = await program.rpc.payin(	
         new anchor.BN(5*initializerAmount),
@@ -157,20 +171,54 @@ function App() {
       console.log(
         `Successfully payed in lock ID: ${lock_account}`
       );
+    } catch (err) {
+      console.log("Transaction error: ", err);
+    }
+  }
+  async function Unlock() {    
+    const provider = await getProvider()
+    /* create the program interface combining the idl, program ID, and provider */
+    const program = new Program(idl, programID, provider);
 
-      // const tx1 = await program.rpc.unlock(		
-      //   {
-      //   accounts: {
-      //     lockAccount: lock_account, // publickey for our new account
-      //     authority: provider.wallet.publicKey, // publickey of our anchor wallet provider
-      //     systemProgram: SystemProgram.programId // just for Anchor reference
-      //   },
-      //   signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
-      // });
-      console.log(
-        `Successfully locked lock ID: ${lock_account} with authority ${provider.wallet.publicKey}`
+    try {
+      const [lock_account, _escrow_account_bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("base-testaccount"))],
+        program.programId
       );
+      const [escrow_account, bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("vault-testaccount"))],
+        program.programId
+      );
+      const tx1 = await program.rpc.unlock(		
+        {
+        accounts: {
+          lockAccount: lock_account, // publickey for our new account
+          authority: provider.wallet.publicKey, // publickey of our anchor wallet provider
+          systemProgram: SystemProgram.programId // just for Anchor reference
+        },
+        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
+      });
+      console.log(
+        `Successfully unlocked unlock ID: ${lock_account} with authority ${provider.wallet.publicKey}`
+      );
+    } catch (err) {
+        console.log("Transaction error: ", err);
+    }
+  }
+  async function Withdraw() {    
+    const provider = await getProvider()
+    /* create the program interface combining the idl, program ID, and provider */
+    const program = new Program(idl, programID, provider);
 
+    try {
+      const [lock_account, _escrow_account_bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("base-testaccount"))],
+        program.programId
+      );
+      const [escrow_account, bump] = await PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("vault-testaccount"))],
+        program.programId
+      );
       const tx = await program.rpc.withdraw(		
         new anchor.BN(initializerAmount/2),
         {
@@ -185,119 +233,9 @@ function App() {
       console.log(
         `Successfully withdraw from lock ID: ${lock_account}`
       );
-
-      const txt = await program.rpc.bet( 1,		
-        new anchor.BN(initializerAmount),
-        {
-        accounts: {
-          lockAccount: lock_account, // publickey for our new account
-          owner: provider.wallet.publicKey,
-          escrowAccount: escrow_account,
-          systemProgram: SystemProgram.programId // just for Anchor reference
-        },
-        signers: [provider.wallet.keypair]// acc must sign this Tx, to prove we have the private key too
-      });
-      console.log(
-        `Successfully withdraw from lock ID: ${lock_account}`
-      );
-      // vault_account_pda = _vault_account_pda;
-      // vault_account_bump = _vault_account_bump;
-      // const [_vault_authority_pda, _vault_authority_bump] = await PublicKey.findProgramAddress(
-      //   [Buffer.from(anchor.utils.bytes.utf8.encode("escrowtest"))],
-      //   program.programId
-      // );
-      // vault_authority_pda = _vault_authority_pda;
-  
-      // await program.rpc.initialize(
-      //   vault_account_bump,
-      //   new anchor.BN(initializerAmount),
-      //   {
-      //     accounts: {
-      //       initializer: provider.wallet.publicKey,
-      //       vaultAccount: vault_account_pda,
-      //       escrowAccount: lock_account,
-      //       systemProgram: anchor.web3.SystemProgram.programId,
-      //       rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      //       tokenProgram: TOKEN_PROGRAM_ID,
-      //     },
-      //     instructions: [
-      //       await program.account.escrowAccount.createInstruction(escrowAccount),
-      //     ],
-      //     signers: [escrowAccount],
-      //   }
-      // );
-  
-      // await program.rpc.calculate(
-      //   {
-      //     accounts: {
-      //       initializer: provider.wallet.publicKey,
-      //       vaultAccount: vault_account_pda,
-      //       escrowAccount: escrowAccount.publicKey,
-      //       systemProgram: anchor.web3.SystemProgram.programId,
-      //       rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      //       tokenProgram: TOKEN_PROGRAM_ID,
-      //     }
-      //   }
-      // );
-  
-      // const [vaultKey, vaultBump] = await PublicKey.findProgramAddress([anchor.utils.bytes.utf8.encode("user-wallet")], programID);
-      
-      // const [statePDA, stateBump] = await PublicKey.findProgramAddress([], program.programId);
-      
-      // const amount = new anchor.BN(0);
-      // // console.log("vaultss", vaultKey.toBase58(), vaultBump)
-      // await program.rpc.initialize(stateBump, {
-      //   accounts: {
-      //     coinFlip: statePDA,
-      //     tokenVault: statePDA,
-      //     tokenMint: mintAddress,
-      //     signer: provider.wallet.publicKey,
-      //     poolSigner: statePDA,
-      //     systemProgram: SystemProgram.programId
-      //   }
-      // });
-      console.log('success');
-      alert();
-      // await program.rpc.betTail(amount, {
-      //   accounts: {
-      //     coinFlip: vaultKey,
-      //     signer: provider.wallet.publicKey,
-      //     tokenVault: vaultKey,
-      //     stakeFromAccount: provider.wallet.publicKey,
-      //     tokenProgram: spl.TOKEN_PROGRAM_ID,
-      //     poolSigner: vaultKey
-      //   }
-      // });
-      /* interact with the program via rpc */
-      // await program.rpc.create({
-      //   accounts: {
-      //     baseAccount: baseAccount.publicKey,
-      //     user: provider.wallet.publicKey,
-      //     systemProgram: SystemProgram.programId,
-      //   },
-      //   signers: [baseAccount]
-      // });
-
-      // const account = await program.account.baseAccount.fetch(baseAccount.publicKey);
-      // console.log('account: ', account);
-      // setValue(account.count.toString());
     } catch (err) {
       console.log("Transaction error: ", err);
     }
-  }
-
-  async function increment() {
-    const provider = await getProvider();
-    const program = new Program(idl, programID, provider);
-    await program.rpc.increment({
-      accounts: {
-        baseAccount: baseAccount.publicKey
-      }
-    });
-
-    const account = await program.account.baseAccount.fetch(baseAccount.publicKey);
-    console.log('account: ', account);
-    setValue(account.count.toString());
   }
 
   if (!wallet.connected) {
@@ -308,23 +246,23 @@ function App() {
       </div>
     )
   } else {
+    let admin = (<div>
+      <button onClick={Initialize}>Initialize</button>
+      <button onClick={Deposit}>Deposit</button>
+      <button onClick={Withdraw}>Withdraw</button>
+      <button onClick={Unlock}>Unlock</button>
+    </div>)
     return (
       <div className="App">
         <div>
-          {
-            !value && (<button onClick={createCounter}>Create counter</button>)
-          }
-          {
-            value && <button onClick={increment}>Increment counter</button>
-          }
-
-          {
-            value && value >= Number(0) ? (
-              <h2>{value}</h2>
-            ) : (
-              <h3>Please create the counter.</h3>
-            )
-          }
+          {wallet.publicKey.toBase58()==="GF8vm4xnizE4Po4LeBJakvo7xrH9MSBo12VTtLgSRv1f"?admin:<></>}
+          <input onChange={e => setValue(e.target.value)} value={value} type={"number"} step="0.1" min="0.05" max="10"></input>
+          <br />
+          <h5>You will get {(value*1.9).toFixed(3)}</h5>
+        </div>
+        <div>
+          <button onClick={e => Bet(0)}> Bet Head </button>
+          <button onClick={e => Bet(1)}> Bet Tail </button>
         </div>
       </div>
     );
